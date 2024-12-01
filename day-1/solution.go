@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -16,13 +16,13 @@ func main() {
 }
 
 func part1() {
-	input := getInput("input.txt")
+	input, _ := GetInput("input.txt")
 	result := SumDistances(input.left, input.right)
 	fmt.Printf("Part 1 result: %v\n", result)
 }
 
 func part2() {
-	input := getInput("input.txt")
+	input, _ := GetInput("input.txt")
 	result := SimilarityScore(input.left, input.right)
 	fmt.Printf("Part 2 result: %v\n", result)
 }
@@ -31,10 +31,12 @@ type Input struct {
 	left, right []int
 }
 
-func getInput(filename string) Input {
+var ErrInputFile = errors.New("cannot open input file")
+
+func GetInput(filename string) (*Input, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		return nil, ErrInputFile
 	}
 	defer file.Close()
 
@@ -54,7 +56,7 @@ func getInput(filename string) Input {
 		right = append(right, rightInt)
 	}
 
-	return Input{left: left, right: right}
+	return &Input{left: left, right: right}, nil
 
 }
 
