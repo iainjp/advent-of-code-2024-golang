@@ -11,9 +11,20 @@ import (
 )
 
 func main() {
+	part1()
+	part2()
+}
+
+func part1() {
 	input := getInput("input.txt")
 	result := SumDistances(input.left, input.right)
-	fmt.Printf("Got result: %v\n", result)
+	fmt.Printf("Part 1 result: %v\n", result)
+}
+
+func part2() {
+	input := getInput("input.txt")
+	result := SimilarityScore(input.left, input.right)
+	fmt.Printf("Part 2 result: %v\n", result)
 }
 
 type Input struct {
@@ -63,4 +74,17 @@ func SumDistances(left, right []int) int {
 	}
 
 	return total
+}
+
+func SimilarityScore(left, right []int) int {
+	counts := make(map[int]int)
+	for _, num := range right {
+		counts[num] = counts[num] + 1
+	}
+
+	score := 0
+	for _, num := range left {
+		score += num * counts[num]
+	}
+	return score
 }
