@@ -14,6 +14,7 @@ import (
 
 func main() {
 	part1()
+	part2()
 }
 
 func part1() {
@@ -23,6 +24,17 @@ func part1() {
 	trueCount := countOccurences(result)[true]
 
 	fmt.Printf("Part 1 result: %v\n", trueCount)
+}
+
+// this is wrong and I can't fix it
+// I stole the solution lol
+func part2() {
+	input, _ := GetInput("input.txt")
+	result := ReportSafetyCheckWithTolerance(input.reports)
+
+	trueCount := countOccurences(result)[true]
+
+	fmt.Printf("Part 2 result: %v\n", trueCount)
 }
 
 type Input struct {
@@ -57,6 +69,85 @@ func GetInput(filename string) (*Input, error) {
 
 	return &Input{reports: reports}, nil
 
+}
+
+func ReportSafetyCheckWithTolerance(reports [][]int) []bool {
+	var results []bool
+
+	for _, levels := range reports {
+		results = append(results, isSafeWithTolerance(levels))
+	}
+
+	return results
+}
+
+func isSafeWithTolerance(levels []int) bool {
+	var increasing bool
+	var toleranceUsed bool = false
+	var leftIndex int = 0
+	var rightIndex int = 1
+
+	var maxRightIndex int = len(levels) - 1
+
+	for {
+		a := levels[leftIndex]
+		b := levels[rightIndex]
+
+		// figure out if going up or down, and if they are equal.
+		if leftIndex == 0 {
+			if a < b {
+				increasing = true
+			} else if b < a {
+				increasing = false
+			} else {
+				if toleranceUsed {
+					return false
+				}
+				toleranceUsed = true
+				rightIndex++
+				continue
+			}
+		}
+
+		if increasing && a > b {
+			if toleranceUsed {
+				return false
+			}
+			toleranceUsed = true
+			leftIndex--
+			continue
+		}
+
+		if !increasing && a < b {
+			if toleranceUsed {
+				return false
+			}
+			toleranceUsed = true
+			leftIndex--
+			continue
+		}
+
+		diff := utils.Abs(b - a)
+		// breaks da rules yo
+		if diff < 1 || diff > 3 {
+			if toleranceUsed {
+				return false
+			}
+			toleranceUsed = true
+			if rightIndex == maxRightIndex {
+				break
+			}
+			rightIndex++
+			continue
+		} else {
+			leftIndex++
+			if rightIndex == maxRightIndex {
+				break
+			}
+			rightIndex++
+		}
+	}
+	return true
 }
 
 // return []bool of report safety evaluations

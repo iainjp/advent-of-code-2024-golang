@@ -81,6 +81,30 @@ func TestReportSafetyCheck(t *testing.T) {
 	CheckEqual(got, want, t)
 }
 
+func TestReportSafetyCheckWithTolerance(t *testing.T) {
+	input := &Input{reports: [][]int{
+		{7, 6, 4, 2, 1},
+		{1, 2, 7, 8, 9},
+		{9, 7, 6, 2, 1},
+		{1, 3, 2, 4, 5},
+		{8, 6, 4, 4, 1},
+		{1, 3, 6, 7, 9},
+	}}
+
+	want := []bool{
+		true,
+		false,
+		false,
+		true,
+		true,
+		true,
+	}
+
+	got := ReportSafetyCheckWithTolerance(input.reports)
+
+	CheckEqual(got, want, t)
+}
+
 func TestGetDistances(t *testing.T) {
 	input := []int{1, 2, 4}
 	want := []int{1, 2}
