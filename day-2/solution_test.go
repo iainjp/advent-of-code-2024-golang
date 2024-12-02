@@ -90,26 +90,6 @@ func TestGetDistances(t *testing.T) {
 	CheckEqual(got, want, t)
 }
 
-func TestDistancesLessThan3(t *testing.T) {
-	t.Run("less than 3 returns true", func(t *testing.T) {
-		levels := []int{1, 3, 4}
-		want := true
-
-		got := DistancesAtMost3(levels)
-
-		CheckEqual(got, want, t)
-	})
-
-	t.Run("more than 3 returns false", func(t *testing.T) {
-		levels := []int{1, 4, 8}
-		want := false
-
-		got := DistancesAtMost3(levels)
-
-		CheckEqual(got, want, t)
-	})
-}
-
 func CheckEqual[K any](got, want K, t testing.TB) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {

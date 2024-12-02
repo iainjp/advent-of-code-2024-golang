@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"iain.fyi/aoc2024/utils"
 )
 
 func main() {
@@ -61,48 +63,27 @@ func GetInput(filename string) (*Input, error) {
 func ReportSafetyCheck(reports [][]int) []bool {
 	var results []bool
 
+	atLeast1 := func(i int) bool { return i >= 1 }
+	atMost3 := func(i int) bool { return i <= 3 }
+
 	for _, levels := range reports {
+		distances := GetDistances(levels)
 		result := IsIncreasingOrDecreasing(levels) &&
-			DistancesAreAtleast1(levels) &&
-			DistancesAtMost3(levels)
+			utils.All(distances, atLeast1) &&
+			utils.All(distances, atMost3)
 		results = append(results, result)
 	}
 
 	return results
 }
 
-func abs(v int) int {
-	return max(v, -v)
-}
-
-func DistancesAreAtleast1(levels []int) bool {
-	distances := GetDistances(levels)
-	atLeast1 := func(i int) bool { return i >= 1 }
-	return All(distances, atLeast1)
-}
-
-func DistancesAtMost3(levels []int) bool {
-	distances := GetDistances(levels)
-	lessThan3 := func(i int) bool { return i <= 3 }
-	return All(distances, lessThan3)
-}
-
 func GetDistances(series []int) []int {
 	var distances []int
 	for i := range len(series) - 1 {
-		distance := abs(series[i] - series[i+1])
+		distance := utils.Abs(series[i] - series[i+1])
 		distances = append(distances, distance)
 	}
 	return distances
-}
-
-func All[T any](ts []T, predicate func(T) bool) bool {
-	for _, t := range ts {
-		if !predicate(t) {
-			return false
-		}
-	}
-	return true
 }
 
 func IsIncreasingOrDecreasing(levels []int) bool {
