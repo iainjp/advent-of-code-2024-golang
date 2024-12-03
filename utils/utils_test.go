@@ -37,14 +37,15 @@ func TestAll(t *testing.T) {
 
 		var fn = func(t int) bool {
 			calls += 1
-			return calls%2 == 0
+			return t == 0 || calls == 2
 		}
 
-		inputs := []int{1, 2, 3}
+		inputs := []int{0, 2, 4, 4}
 
 		result := All(inputs, fn)
 
 		CheckEquals(result, false, t)
+		CheckEquals(calls, 3, t)
 	})
 
 }
@@ -62,8 +63,8 @@ func TestAny(t *testing.T) {
 
 		result := Any(inputs, fn)
 
-		CheckEquals(calls, 1, t)
 		CheckEquals(result, true, t)
+		CheckEquals(calls, 1, t)
 	})
 
 	t.Run("no predicate responses true, returns false", func(t *testing.T) {
@@ -79,7 +80,40 @@ func TestAny(t *testing.T) {
 		result := All(inputs, fn)
 
 		CheckEquals(result, false, t)
+		CheckEquals(calls, 1, t)
 	})
+}
+
+func TestFilter(t *testing.T) {
+	calls := 0
+	input := []int{1, 2, 3}
+
+	var fn = func(t int) bool {
+		calls++
+		return t%2 == 0
+	}
+
+	want := []int{2}
+
+	got := Filter(input, fn)
+
+	CheckEquals(got, want, t)
+	CheckEquals(calls, 3, t)
+}
+
+func TestMap(t *testing.T) {
+	input := []int{1, 2, 3}
+	fn := func(i int) int {
+		return i * 3
+	}
+
+	want := []int{
+		3, 6, 9,
+	}
+
+	got := Map(input, fn)
+
+	CheckEquals(got, want, t)
 }
 
 func TestCountOccurences(t *testing.T) {

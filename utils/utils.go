@@ -22,6 +22,25 @@ func Any[T any](ts []T, predicate func(T) bool) bool {
 	return false
 }
 
+func Map[T any, R any](ts []T, fn func(T) R) []R {
+	var results []R
+	for _, t := range ts {
+		result := fn(t)
+		results = append(results, result)
+	}
+	return results
+}
+
+func Filter[T any](ts []T, fn func(T) bool) []T {
+	var results []T
+	for _, t := range ts {
+		if fn(t) {
+			results = append(results, t)
+		}
+	}
+	return results
+}
+
 func CountOccurences[T comparable](ts []T) map[T]int {
 	counts := make(map[T]int)
 	for _, num := range ts {
