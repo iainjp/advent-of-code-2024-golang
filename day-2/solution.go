@@ -21,7 +21,7 @@ func part1() {
 	input, _ := GetInput("input.txt")
 	result := ReportSafetyCheck(input.reports)
 
-	trueCount := countOccurences(result)[true]
+	trueCount := utils.CountOccurences(result)[true]
 
 	fmt.Printf("Part 1 result: %v\n", trueCount)
 }
@@ -32,7 +32,7 @@ func part2() {
 	input, _ := GetInput("input.txt")
 	result := ReportSafetyCheckWithTolerance(input.reports)
 
-	trueCount := countOccurences(result)[true]
+	trueCount := utils.CountOccurences(result)[true]
 
 	fmt.Printf("Part 2 result: %v\n", trueCount)
 }
@@ -186,12 +186,4 @@ func IsIncreasingOrDecreasing(levels []int) bool {
 	slices.Reverse(levels)
 	isDecreasing := slices.IsSorted(levels)
 	return isDecreasing
-}
-
-func countOccurences[T comparable](ts []T) map[T]int {
-	counts := make(map[T]int)
-	for _, num := range ts {
-		counts[num] = counts[num] + 1
-	}
-	return counts
 }
