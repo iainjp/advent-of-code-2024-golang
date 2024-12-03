@@ -114,6 +114,20 @@ func TestGetDistances(t *testing.T) {
 	CheckEqual(got, want, t)
 }
 
+func TestGetPermutationsWithOneMissing(t *testing.T) {
+	input := []int{1, 2, 3, 4}
+	want := [][]int{
+		{2, 3, 4},
+		{1, 3, 4},
+		{1, 2, 4},
+		{1, 2, 3},
+	}
+
+	got := GetPermutationsWithOneMissing(input)
+
+	CheckEqual(got, want, t)
+}
+
 func CheckEqual[K any](got, want K, t testing.TB) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {

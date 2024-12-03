@@ -23,17 +23,18 @@ func part1() {
 
 	trueCount := utils.CountOccurences(result)[true]
 
+	// should be 369 for full input
 	fmt.Printf("Part 1 result: %v\n", trueCount)
 }
 
-// this is wrong and I can't fix it
-// I stole the solution lol
+// I went back and did it for real!
 func part2() {
 	input, _ := GetInput("input.txt")
 	result := ReportSafetyCheckWithTolerance(input.reports)
 
 	trueCount := utils.CountOccurences(result)[true]
 
+	// should be 428 for full input
 	fmt.Printf("Part 2 result: %v\n", trueCount)
 }
 
@@ -75,97 +76,54 @@ func ReportSafetyCheckWithTolerance(reports [][]int) []bool {
 	var results []bool
 
 	for _, levels := range reports {
-		results = append(results, isSafeWithTolerance(levels))
+		result := isSafe(levels)
+		if !result {
+			permuts := GetPermutationsWithOneMissing(levels)
+			for _, permut := range permuts {
+				if isSafe(permut) {
+					result = true
+					break
+				}
+			}
+		}
+
+		results = append(results, result)
 	}
 
 	return results
-}
-
-func isSafeWithTolerance(levels []int) bool {
-	var increasing bool
-	var toleranceUsed bool = false
-	var leftIndex int = 0
-	var rightIndex int = 1
-
-	var maxRightIndex int = len(levels) - 1
-
-	for {
-		a := levels[leftIndex]
-		b := levels[rightIndex]
-
-		// figure out if going up or down, and if they are equal.
-		if leftIndex == 0 {
-			if a < b {
-				increasing = true
-			} else if b < a {
-				increasing = false
-			} else {
-				if toleranceUsed {
-					return false
-				}
-				toleranceUsed = true
-				rightIndex++
-				continue
-			}
-		}
-
-		if increasing && a > b {
-			if toleranceUsed {
-				return false
-			}
-			toleranceUsed = true
-			leftIndex--
-			continue
-		}
-
-		if !increasing && a < b {
-			if toleranceUsed {
-				return false
-			}
-			toleranceUsed = true
-			leftIndex--
-			continue
-		}
-
-		diff := utils.Abs(b - a)
-		// breaks da rules yo
-		if diff < 1 || diff > 3 {
-			if toleranceUsed {
-				return false
-			}
-			toleranceUsed = true
-			if rightIndex == maxRightIndex {
-				break
-			}
-			rightIndex++
-			continue
-		} else {
-			leftIndex++
-			if rightIndex == maxRightIndex {
-				break
-			}
-			rightIndex++
-		}
-	}
-	return true
 }
 
 // return []bool of report safety evaluations
 func ReportSafetyCheck(reports [][]int) []bool {
 	var results []bool
 
-	atLeast1 := func(i int) bool { return i >= 1 }
-	atMost3 := func(i int) bool { return i <= 3 }
-
 	for _, levels := range reports {
-		distances := GetDistances(levels)
-		result := IsIncreasingOrDecreasing(levels) &&
-			utils.All(distances, atLeast1) &&
-			utils.All(distances, atMost3)
+		result := isSafe(levels)
 		results = append(results, result)
 	}
 
 	return results
+}
+
+var atLeast1 = func(i int) bool { return i >= 1 }
+var atMost3 = func(i int) bool { return i <= 3 }
+
+func isSafe(levels []int) bool {
+	distances := GetDistances(levels)
+	return IsIncreasingOrDecreasing(levels) &&
+		utils.All(distances, atLeast1) &&
+		utils.All(distances, atMost3)
+}
+
+func GetPermutationsWithOneMissing(levels []int) [][]int {
+	var permuts [][]int
+	for index, _ := range levels {
+		slice := make([]int, 0)
+		slice = append(slice, levels[:index]...)
+		slice = append(slice, levels[index+1:]...)
+		permuts = append(permuts, slice)
+	}
+	return permuts
 }
 
 func GetDistances(series []int) []int {
