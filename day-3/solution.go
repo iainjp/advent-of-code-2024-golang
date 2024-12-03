@@ -31,15 +31,26 @@ func GetInput(filename string) (*Input, error) {
 }
 
 func main() {
-	part1()
+	input, _ := GetInput("input.txt")
+	Part1(input.memory)
+	Part2(input.memory)
 }
 
-func part1() {
-	input, _ := GetInput("input.txt")
-	matches := GetMatches(input.memory)
+func Part1(input string) int {
+	matches := GetMatches(input)
 	result := EvaluateMatches(matches)
 
 	fmt.Printf("Part 1: got <%v>\n", result)
+	return result
+}
+
+func Part2(input string) int {
+	cleanInput := RemoveAfterDontUntilDoOrEnd(input)
+	matches := GetMatches(cleanInput)
+	result := EvaluateMatches(matches)
+
+	fmt.Printf("Part 2: got <%v>\n", result)
+	return result
 }
 
 type Match struct {
@@ -74,6 +85,52 @@ func GetMatches(input string) []Match {
 	}
 
 	return matches
+}
+
+// remove `dont().*` up until do(), returned as new string
+func RemoveAfterDontUntilDoOrEnd(input string) string {
+	pattern := `(don't\(\)).+?(do\(\))`
+	r, _ := regexp.Compile(pattern)
+
+	outcomeSlice := strings.Split(input, "")
+	var outcomeString string
+	inputBytes := []byte(input)
+
+	results := r.FindSubmatchIndex(inputBytes)
+
+	if results == nil {
+		return input
+	}
+	for results != nil {
+		dontStartIndex := 2
+		doEndIndex := 5
+
+		newSlice := make([]string, 0)
+
+		newSlice = append(newSlice, outcomeSlice[:results[dontStartIndex]]...)
+		newSlice = append(newSlice, outcomeSlice[results[doEndIndex]:]...)
+
+		outcomeSlice = newSlice
+		outcomeString = strings.Join(outcomeSlice, "")
+		results = r.FindSubmatchIndex([]byte(outcomeString))
+	}
+
+	// check for outstanding `don't().*`
+	lastR, _ := regexp.Compile(`(don't\(\).*)`)
+	results = lastR.FindSubmatchIndex([]byte(outcomeString))
+
+	if results == nil {
+		return outcomeString
+	}
+
+	dontStartIndex := 2
+	newSlice := make([]string, 0)
+	newSlice = append(newSlice, outcomeSlice[:results[dontStartIndex]]...)
+
+	outcomeSlice = newSlice
+	outcomeString = strings.Join(outcomeSlice, "")
+
+	return outcomeString
 }
 
 type Input struct {
