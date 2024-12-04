@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 )
 
@@ -47,7 +46,6 @@ func GetInput(filename string) (*Input, error) {
 	}
 
 	maxY := y - 1
-	fmt.Printf("got maxX=<%v>, maxY=<%v>", maxX, maxY)
 	return &Input{maxX: maxX, maxY: maxY, grid: grid}, nil
 }
 
@@ -101,7 +99,7 @@ func Part2(input *Input) int {
 				diagMatches++
 			}
 		}
-		// 2 diagonal matches makes it a X-MAS
+		// 2+ diagonal matches makes it a X-MAS
 		if diagMatches >= 2 {
 			counter++
 		}
@@ -225,30 +223,4 @@ func GetCoordsOfLetter(grid GridMap, letter string) []Point {
 	}
 
 	return result
-}
-
-func pointCmp(l, r Point) int {
-	if l.y < r.y {
-		return -1
-	}
-	if l.y == r.y {
-		if l.x < r.x {
-			return -1
-		}
-	}
-	return 1
-}
-
-// get keys ordered by y, x - like scanning along a big line
-func GetOrderedKeys(dict GridMap) []Point {
-	keys := make([]Point, len(dict))
-	i := 0
-	for k := range dict {
-		keys[i] = k
-		i++
-	}
-
-	slices.SortFunc(keys, pointCmp)
-
-	return keys
 }

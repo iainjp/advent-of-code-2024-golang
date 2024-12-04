@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -58,5 +59,12 @@ func CheckEqual[K any](got, want K, t testing.TB) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("wanted %v, got %v", want, got)
+	}
+}
+
+func CheckContains[K comparable, E ~[]K](slice E, item K, t testing.TB) {
+	t.Helper()
+	if !slices.Contains(slice, item) {
+		t.Fatalf("%v does not contain %v", slice, item)
 	}
 }
