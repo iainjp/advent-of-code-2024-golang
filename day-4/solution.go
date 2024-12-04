@@ -37,7 +37,7 @@ func GetInput(filename string) (*Input, error) {
 	grid := make(GridMap, 1000)
 	for scanner.Scan() {
 		line := scanner.Text()
-		maxX = len(line)
+		maxX = len(line) - 1
 
 		for x, c := range strings.Split(line, "") {
 			coord := Point{x, y}
@@ -46,7 +46,7 @@ func GetInput(filename string) (*Input, error) {
 		y++
 	}
 
-	maxY := y
+	maxY := y - 1
 	fmt.Printf("got maxX=<%v>, maxY=<%v>", maxX, maxY)
 	return &Input{maxX: maxX, maxY: maxY, grid: grid}, nil
 }
