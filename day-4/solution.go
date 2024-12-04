@@ -55,6 +55,9 @@ func main() {
 	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
+
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
 }
 
 func Part1(input *Input) int {
@@ -68,13 +71,39 @@ func Part1(input *Input) int {
 	counter := 0
 
 	for _, p := range startingPoints {
-		sequencesToConsider := GetSeqOfPointsSurrounding(p, input.maxX, input.maxY)
+		sequencesToConsider := GetSeqOf4PointsSurrounding(p, input.maxX, input.maxY)
 
 		for _, ps := range sequencesToConsider {
 			if GetPointsAsString(input.grid, ps...) == "XMAS" {
-				// fmt.Printf("Found XMAS at: %v\n", ps)
 				counter++
 			}
+		}
+	}
+
+	return counter
+}
+
+func Part2(input *Input) int {
+	// TODO
+	// 1. get start point of X
+	// 2. check if diagonals spell MAS, increment counter when 2 diagonals spell MAS (e.g. a X)
+	// 3. donezo?
+
+	letterAs := GetCoordsOfLetter(input.grid, "A")
+	counter := 0
+
+	for _, p := range letterAs {
+		toConsider := GetSeqOfDiagonalsOf3CharLong(p, input.maxX, input.maxY)
+
+		diagMatches := 0
+		for _, ps := range toConsider {
+			if GetPointsAsString(input.grid, ps...) == "MAS" {
+				diagMatches++
+			}
+		}
+		// 2 diagonal matches makes it a X-MAS
+		if diagMatches >= 2 {
+			counter++
 		}
 	}
 
@@ -91,7 +120,48 @@ func GetPointsAsString(grid GridMap, ps ...Point) string {
 	return strings.Join(result, "")
 }
 
-func GetSeqOfPointsSurrounding(p Point, maxX, maxY int) [][]Point {
+func GetSeqOfDiagonalsOf3CharLong(p Point, maxX, maxY int) [][]Point {
+	var results [][]Point
+	spaceUL := p.x >= 1 && p.y >= 1
+	spaceDL := p.x >= 1 && p.y+1 <= maxY
+	spaceUR := p.x+1 <= maxX && p.y >= 1
+	spaceDR := p.x+1 <= maxX && p.y+1 <= maxY
+
+	if spaceUL && spaceDR {
+		ulDiag := []Point{
+			{p.x - 1, p.y - 1},
+			p,
+			{p.x + 1, p.y + 1},
+		}
+		results = append(results, ulDiag)
+
+		drDiag := []Point{
+			{p.x + 1, p.y + 1},
+			p,
+			{p.x - 1, p.y - 1},
+		}
+		results = append(results, drDiag)
+	}
+
+	if spaceUR && spaceDL {
+		urDiag := []Point{
+			{p.x + 1, p.y - 1},
+			p,
+			{p.x - 1, p.y + 1},
+		}
+		results = append(results, urDiag)
+
+		dlDiag := []Point{
+			{p.x - 1, p.y + 1},
+			p,
+			{p.x + 1, p.y - 1},
+		}
+		results = append(results, dlDiag)
+	}
+	return results
+}
+
+func GetSeqOf4PointsSurrounding(p Point, maxX, maxY int) [][]Point {
 	var results [][]Point
 	spaceLeft := p.x >= 3
 	spaceRight := p.x+3 <= maxX
