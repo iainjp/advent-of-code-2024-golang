@@ -1,5 +1,10 @@
 package utils
 
+import (
+	"reflect"
+	"testing"
+)
+
 func Abs(v int) int {
 	return max(v, -v)
 }
@@ -47,4 +52,11 @@ func CountOccurences[T comparable](ts []T) map[T]int {
 		counts[num] = counts[num] + 1
 	}
 	return counts
+}
+
+func CheckEqual[K any](got, want K, t testing.TB) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wanted %v, got %v", want, got)
+	}
 }
