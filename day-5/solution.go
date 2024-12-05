@@ -16,10 +16,15 @@ type OrderingRule struct {
 	lower, upper int
 }
 
+func (r OrderingRule) ShouldEval(pages []int) bool {
+	return slices.Contains(pages, r.lower) &&
+		slices.Contains(pages, r.upper)
+}
+
+// true if pages meet OrderingRule spec
 func (r OrderingRule) Evaluate(pages []int) bool {
 	// rule only matters if both sides are in update
-	shouldEval := slices.Contains(pages, r.lower) &&
-		slices.Contains(pages, r.upper)
+	shouldEval := r.ShouldEval(pages)
 
 	// if it's not applicable, same outcome as if it was and valid
 	if !shouldEval {
@@ -114,6 +119,69 @@ func Part1(input *Input) int {
 		if !slices.Contains(ruleOutcomes, false) {
 			middlePageTotal += update.MiddlePageValue()
 		}
+	}
+
+	return middlePageTotal
+}
+
+func Part2(input *Input) int {
+	// TODO
+	// 1. parse rules
+	// 2. parse pages
+	// 3. combine rules into comparator function
+	// 4. for each incorrectly-ordered update, sort with comparator
+	// 4. return sum of middle values of previously incorrectly-ordered pages that match
+
+	middlePageTotal := 0
+	var unorderedUpdates []Update
+
+	for _, update := range input.updates {
+		var ruleOutcomes []bool
+		for _, rule := range input.rules {
+			ruleOutcomes = append(ruleOutcomes, rule.Evaluate(update.pages))
+		}
+
+		if slices.Contains(ruleOutcomes, false) {
+			unorderedUpdates = append(unorderedUpdates, update)
+		}
+
+	}
+
+	sorter := func(a, b int) int {
+		for _, rule := range input.rules {
+			// if a,b aren't in rule, the rule doesn't care about order
+			if !rule.ShouldEval([]int{a, b}) {
+				return 0
+			}
+
+			if a == rule.lower {
+				if a < b {
+					return -1
+				}
+				if b < a {
+					return 1
+				}
+				return 0
+			}
+
+			if b == rule.lower {
+				if b < a {
+					return -1
+				}
+				if a < b {
+					return 1
+				}
+				return 0
+			}
+		}
+		return 0
+	}
+
+	for _, update := range unorderedUpdates {
+		pages := update.pages
+		slices.SortFunc(pages, sorter)
+		ordered := Update{pages: pages}
+		middlePageTotal += ordered.MiddlePageValue()
 	}
 
 	return middlePageTotal
