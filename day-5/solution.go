@@ -99,6 +99,9 @@ func main() {
 	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
+
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
 }
 
 func Part1(input *Input) int {
@@ -147,32 +150,24 @@ func Part2(input *Input) int {
 
 	}
 
+	// use comparator function to determine which way around rule-including pages should go
+	// if they don't match, it shouldn't matter (e.g. page isn't in the rules)
 	sorter := func(a, b int) int {
 		for _, rule := range input.rules {
 			// if a,b aren't in rule, the rule doesn't care about order
 			if !rule.ShouldEval([]int{a, b}) {
-				return 0
+				continue
 			}
 
-			if a == rule.lower {
-				if a < b {
-					return -1
-				}
-				if b < a {
-					return 1
-				}
-				return 0
+			if a == rule.lower && b == rule.upper {
+				return -1
 			}
 
-			if b == rule.lower {
-				if b < a {
-					return -1
-				}
-				if a < b {
-					return 1
-				}
-				return 0
+			if b == rule.lower && a == rule.upper {
+				return 1
 			}
+
+			return 0
 		}
 		return 0
 	}
