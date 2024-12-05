@@ -30,3 +30,12 @@ func TestGetInput(t *testing.T) {
 
 	utils.CheckEqual(got, want, t)
 }
+
+func TestPart1(t *testing.T) {
+	input, _ := GetInput("input_test.txt")
+
+	want := 143
+	got := Part1(input)
+
+	utils.CheckEqual(got, want, t)
+}
