@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -15,8 +16,26 @@ type OrderingRule struct {
 	lower, upper int
 }
 
+func (r OrderingRule) Evaluate(pages []int) bool {
+	// rule only matters if both sides are in update
+	shouldEval := slices.Contains(pages, r.lower) &&
+		slices.Contains(pages, r.upper)
+
+	// if it's not applicable, same outcome as if it was and valid
+	if !shouldEval {
+		return true
+	}
+
+	return slices.Index(pages, r.lower) < slices.Index(pages, r.upper)
+}
+
 type Update struct {
 	pages []int
+}
+
+func (u Update) MiddlePageValue() int {
+	middlePageIndex := (len(u.pages) - 1) / 2
+	return u.pages[middlePageIndex]
 }
 
 type Input struct {
@@ -84,5 +103,18 @@ func Part1(input *Input) int {
 	// 3. run pages through rules. if all match, get middle value
 	// 4. return sum of middle values of page sets that match
 
-	return 42
+	middlePageTotal := 0
+
+	for _, update := range input.updates {
+		var ruleOutcomes []bool
+		for _, rule := range input.rules {
+			ruleOutcomes = append(ruleOutcomes, rule.Evaluate(update.pages))
+		}
+
+		if !slices.Contains(ruleOutcomes, false) {
+			middlePageTotal += update.MiddlePageValue()
+		}
+	}
+
+	return middlePageTotal
 }
