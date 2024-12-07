@@ -37,3 +37,12 @@ func TestMakeGuard(t *testing.T) {
 		utils.CheckEqual(got, want, t)
 	})
 }
+
+func TestPart1(t *testing.T) {
+	input, _ := GetInput("input_test.txt")
+	want := 41
+
+	got := Part1(input)
+
+	utils.CheckEqual(got, want, t)
+}

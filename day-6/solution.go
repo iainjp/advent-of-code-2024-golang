@@ -4,8 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
+
+	"iain.fyi/aoc2024/utils"
 )
 
 var ErrInputFile = errors.New("cannot open input file")
@@ -24,6 +27,11 @@ const (
 	Right           = iota
 )
 
+const (
+	Obstacle = "#"
+	OutOfMap = ""
+)
+
 type Guard struct {
 	position  Point
 	direction Direction
@@ -32,15 +40,58 @@ type Guard struct {
 
 type Map map[Point]string
 
+func NextPoint(curr Point, dir Direction) *Point {
+	var next *Point
+	switch dir {
+	case Up:
+		next = &Point{curr.x, curr.y - 1}
+	case Right:
+		next = &Point{curr.x + 1, curr.y}
+	case Down:
+		next = &Point{curr.x, curr.y + 1}
+	case Left:
+		next = &Point{curr.x - 1, curr.y}
+	}
+
+	return next
+}
+
+func NextDirection(curr Direction) Direction {
+	var next Direction
+	switch curr {
+	case Up:
+		next = Right
+	case Right:
+		next = Down
+	case Down:
+		next = Left
+	case Left:
+		next = Up
+	}
+	return next
+}
+
+// Move the guard, return false if still in map, true if out
+func (g *Guard) Move(pointMap Map) bool {
+	current := g.position
+
+	next := NextPoint(current, g.direction)
+	for pointMap[*next] == Obstacle {
+		g.direction = NextDirection(g.direction)
+		next = NextPoint(current, g.direction)
+	}
+
+	newPath := append(g.path, *next)
+	g.path = newPath
+	g.position = *next
+
+	return pointMap[g.position] == OutOfMap
+}
+
 type Input struct {
 	pointMap Map
 	guard    Guard
 }
-
-const (
-	RULES_SEPARATOR = "|"
-	PAGE_SEPARATOR  = ","
-)
 
 func GetInput(filename string) (*Input, error) {
 	file, err := os.Open(filename)
@@ -53,7 +104,6 @@ func GetInput(filename string) (*Input, error) {
 
 	var guard Guard
 	pointMap := make(Map, 100)
-
 	y := 0
 
 	for scanner.Scan() {
@@ -69,6 +119,7 @@ func GetInput(filename string) (*Input, error) {
 				guard = *possibleGuard
 			}
 		}
+		y++
 	}
 
 	return &Input{pointMap, guard}, nil
@@ -89,12 +140,12 @@ func MakeGuard(c string, p Point) *Guard {
 	return &Guard{
 		position:  p,
 		direction: directions[c],
-		path:      make([]Point, 100),
+		path:      []Point{p},
 	}
 }
 
 func main() {
-	input, _ := GetInput("input.txt")
+	input, _ := GetInput("input_test.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
@@ -107,6 +158,20 @@ func Part1(input *Input) int {
 	// 3. Record the steps in full
 	// 4. Count steps, donezo
 
-	return 0
+	pointMap := input.pointMap
+	guard := input.guard
 
+	outOfBounds := guard.Move(pointMap)
+	for !outOfBounds {
+		outOfBounds = guard.Move(pointMap)
+	}
+
+	counts := utils.CountOccurences(guard.path)
+	uniquePoints := 0
+	for range maps.Keys(counts) {
+		uniquePoints++
+	}
+
+	// -1 to not count the out-of-bounds point
+	return uniquePoints - 1
 }
