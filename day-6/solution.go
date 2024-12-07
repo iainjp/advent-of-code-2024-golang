@@ -29,7 +29,7 @@ const (
 
 const (
 	Obstacle   = "#"
-	EmptySpace = "#"
+	EmptySpace = "."
 	OutOfMap   = ""
 )
 
@@ -37,6 +37,7 @@ type Guard struct {
 	position  Point
 	direction Direction
 	path      []Point
+	seen      map[Point]int
 }
 
 type Map map[Point]string
@@ -89,6 +90,24 @@ func (g *Guard) Move(pointMap Map) bool {
 	return pointMap[g.position] == OutOfMap
 }
 
+// make copy of guard
+func (g Guard) Clone() Guard {
+	clone := Guard{
+		position:  g.position,
+		direction: g.direction,
+	}
+
+	clone.path = append(clone.path, g.path...)
+
+	seen := make(map[Point]int)
+	for k, v := range g.seen {
+		seen[k] = v
+	}
+	clone.seen = seen
+
+	return clone
+}
+
 type Result int
 
 const (
@@ -96,9 +115,6 @@ const (
 	Finished
 	InLoop
 )
-
-// TODO getting somewhere, but this needs scoped to Guard for lifecycle to make sense
-var seen = make(map[Point]int)
 
 func (g *Guard) MoveWithLoopDetection(pointMap Map) Result {
 	oldPosition := g.position
@@ -109,13 +125,16 @@ func (g *Guard) MoveWithLoopDetection(pointMap Map) Result {
 		next = NextPoint(oldPosition, g.direction)
 	}
 
-	seen[*next] = seen[*next] + 1
+	g.seen[*next] = g.seen[*next] + 1
 
 	newPath := append(g.path, *next)
 	g.path = newPath
 	g.position = *next
 
-	if seen[*next] > 2 && seen[oldPosition] > 2 {
+	seenOld := g.seen[oldPosition]
+	seenNext := g.seen[*next]
+
+	if seenOld > 3 && seenNext > 3 {
 		return InLoop
 	}
 
@@ -179,6 +198,7 @@ func MakeGuard(c string, p Point) *Guard {
 		position:  p,
 		direction: directions[c],
 		path:      []Point{p},
+		seen:      map[Point]int{p: 1},
 	}
 }
 
@@ -224,22 +244,30 @@ func Part2(input *Input) int {
 	// 4. Track counter for permutations that can cause loops
 
 	pointMap := input.pointMap
-	// guard := input.guard
+	firstRunGuard := input.guard.Clone()
 
-	allOptions := AllMapOptions(pointMap)
+	// run guard once to get path
+	firstRunFinished := firstRunGuard.Move(pointMap)
+	for !firstRunFinished {
+		firstRunFinished = firstRunGuard.Move(pointMap)
+	}
 
-	loops := 0
+	allOptions := AllMapOptions(pointMap, firstRunGuard)
+
+	var resultSet []Result
 	for _, m := range allOptions {
-		guard := Guard{
-			position:  input.guard.position,
-			direction: input.guard.direction,
-			path:      []Point{},
-		}
+		guard := input.guard.Clone()
+
 		result := guard.MoveWithLoopDetection(m)
-		for result != Finished {
+		for result == NotFinished {
 			result = guard.MoveWithLoopDetection(m)
 		}
-		if result == InLoop {
+		resultSet = append(resultSet, result)
+	}
+
+	loops := 0
+	for _, r := range resultSet {
+		if r == InLoop {
 			loops += 1
 		}
 	}
@@ -247,17 +275,25 @@ func Part2(input *Input) int {
 	return loops
 }
 
-func AllMapOptions(m Map) []Map {
+func AllMapOptions(m Map, guard Guard) []Map {
 	var allOptions []Map
 
-	for p := range maps.Keys(m) {
-		mNew := make(Map, len(m))
-		maps.Copy(mNew, m)
-
-		if mNew[p] == EmptySpace {
-			mNew[p] = Obstacle
+	var uniquePointsInPath []Point
+	pointCounts := utils.CountOccurences(guard.path)
+	for k, v := range pointCounts {
+		if v == 1 && k != guard.position {
+			uniquePointsInPath = append(uniquePointsInPath, k)
 		}
-		allOptions = append(allOptions, mNew)
+	}
+
+	for _, p := range uniquePointsInPath {
+		mp := m[p]
+		if mp == EmptySpace {
+			mNew := make(Map, len(m))
+			maps.Copy(mNew, m)
+			mNew[p] = Obstacle
+			allOptions = append(allOptions, mNew)
+		}
 	}
 	return allOptions
 }
