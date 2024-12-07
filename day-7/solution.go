@@ -31,7 +31,6 @@ func GetInput(filename string) (*Input, error) {
 
 	var equations []Equation
 	for scanner.Scan() {
-		//handle string
 		line := scanner.Text()
 
 		split := strings.Split(line, ":")
@@ -53,10 +52,14 @@ func main() {
 	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
-
 }
 
 func Part1(input *Input) int {
-	// 1. Parse map and place guard
+	// run through all possible equations and sum their results
+	// but how? idk.
 	return 0
+}
+
+func CanBeSolved(e Equation) bool {
+	return true
 }
