@@ -12,8 +12,8 @@ import (
 var ErrInputFile = errors.New("cannot open input file")
 
 type Equation struct {
-	targetTotal int
-	operands    []int
+	targetTotal uint64
+	operands    []uint64
 }
 
 type Input struct {
@@ -54,12 +54,68 @@ func main() {
 	fmt.Printf("Part 1: got %v\n", p1Result)
 }
 
-func Part1(input *Input) int {
-	// run through all possible equations and sum their results
-	// but how? idk.
-	return 0
+
+type Node struct {
+	value uint64
+	mult  *Node
+	add *Node
 }
 
-func CanBeSolved(e Equation) bool {
-	return true
+type Tree struct {
+	root *Node
+}
+
+func (t *Tree) Insert(val uint64) {
+	t.InsertRecursive(t.root, val, 0)
+}
+
+func (t *Tree) InsertRecursive(node *Node, val uint64, prev uint64) *Node {
+	if t.root == nil {
+		t.root = &Node{value: val, nil, nil}
+		return t.root
+	}
+
+	if node.mult == nil {
+		node.mult = &Node{prev*val, nil, nil}
+	}
+
+	if node.add == nil {
+		node.add = &Node{prev+add, nil, nil}
+	}
+
+	t.InsertRecursive(node.mult, val, node.value)
+	t.InsertRecursive(node.add, val, node.value)
+	return node
+}
+
+
+
+func Part1(input *Input) int {
+	// Run through all possible equations, find those that are possible, sum those results.
+	// Using a binary tree (since there's 2 options at each operand, + | *)
+	// then each child node is the result.
+	// Walk the equation and the tree, creating nodes for results. Then on to the next layer and continue.
+	// Finally, walk the tree and check if any leaf nodes equal the target total.
+
+
+	for _, equation := range input.equations {
+		start := Tree{
+			value: equation.operands[0],
+		}
+
+		for i := equation.operands[1:] {
+			start.left = Multiple(i, int(start.value))
+			start.right = Add(i, int(start.value))
+
+		}
+
+	}
+}
+
+func Add(i, i2 int) int {
+	return i + i2
+}
+
+func Multiple(i, i2 int) int {
+	return i * i2
 }
