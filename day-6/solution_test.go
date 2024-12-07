@@ -46,3 +46,12 @@ func TestPart1(t *testing.T) {
 
 	utils.CheckEqual(got, want, t)
 }
+
+func TestPart2(t *testing.T) {
+	input, _ := GetInput("input_test.txt")
+	want := 6
+
+	got := Part2(input)
+
+	utils.CheckEqual(got, want, t)
+}

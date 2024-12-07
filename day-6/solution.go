@@ -28,8 +28,9 @@ const (
 )
 
 const (
-	Obstacle = "#"
-	OutOfMap = ""
+	Obstacle   = "#"
+	EmptySpace = "#"
+	OutOfMap   = ""
 )
 
 type Guard struct {
@@ -86,6 +87,43 @@ func (g *Guard) Move(pointMap Map) bool {
 	g.position = *next
 
 	return pointMap[g.position] == OutOfMap
+}
+
+type Result int
+
+const (
+	NotFinished Result = iota
+	Finished
+	InLoop
+)
+
+// TODO getting somewhere, but this needs scoped to Guard for lifecycle to make sense
+var seen = make(map[Point]int)
+
+func (g *Guard) MoveWithLoopDetection(pointMap Map) Result {
+	oldPosition := g.position
+
+	next := NextPoint(oldPosition, g.direction)
+	for pointMap[*next] == Obstacle {
+		g.direction = NextDirection(g.direction)
+		next = NextPoint(oldPosition, g.direction)
+	}
+
+	seen[*next] = seen[*next] + 1
+
+	newPath := append(g.path, *next)
+	g.path = newPath
+	g.position = *next
+
+	if seen[*next] > 2 && seen[oldPosition] > 2 {
+		return InLoop
+	}
+
+	if pointMap[g.position] == OutOfMap {
+		return Finished
+	}
+
+	return NotFinished
 }
 
 type Input struct {
@@ -149,10 +187,12 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
+
 }
 
 func Part1(input *Input) int {
-	// TODO
 	// 1. Parse map and place guard
 	// 2. Walk guard using rules, until you hit boundary
 	// 3. Record the steps in full
@@ -174,4 +214,50 @@ func Part1(input *Input) int {
 
 	// -1 to not count the out-of-bounds point
 	return uniquePoints - 1
+}
+
+func Part2(input *Input) int {
+	// TODO
+	// 1. Parse map, place guard
+	// 2. Create permutation of map, each with one empty space replaced with an obstacle
+	// 3. Run the guard while identifying loops (lots of duplicates in guard.path?)
+	// 4. Track counter for permutations that can cause loops
+
+	pointMap := input.pointMap
+	// guard := input.guard
+
+	allOptions := AllMapOptions(pointMap)
+
+	loops := 0
+	for _, m := range allOptions {
+		guard := Guard{
+			position:  input.guard.position,
+			direction: input.guard.direction,
+			path:      []Point{},
+		}
+		result := guard.MoveWithLoopDetection(m)
+		for result != Finished {
+			result = guard.MoveWithLoopDetection(m)
+		}
+		if result == InLoop {
+			loops += 1
+		}
+	}
+
+	return loops
+}
+
+func AllMapOptions(m Map) []Map {
+	var allOptions []Map
+
+	for p := range maps.Keys(m) {
+		mNew := make(Map, len(m))
+		maps.Copy(mNew, m)
+
+		if mNew[p] == EmptySpace {
+			mNew[p] = Obstacle
+		}
+		allOptions = append(allOptions, mNew)
+	}
+	return allOptions
 }
