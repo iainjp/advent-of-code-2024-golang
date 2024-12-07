@@ -68,3 +68,10 @@ func CheckContains[K comparable, E ~[]K](slice E, item K, t testing.TB) {
 		t.Fatalf("%v does not contain %v", slice, item)
 	}
 }
+
+func CheckNotNil[K any](got *K, t testing.TB) {
+	t.Helper()
+	if got == nil {
+		t.Fatal("expected not nil, got nil")
+	}
+}
