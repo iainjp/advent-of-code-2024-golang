@@ -278,22 +278,19 @@ func Part2(input *Input) int {
 func AllMapOptions(m Map, guard Guard) []Map {
 	var allOptions []Map
 
-	var uniquePointsInPath []Point
+	var uniqueEmptySpaceInMap []Point
 	pointCounts := utils.CountOccurences(guard.path)
-	for k, v := range pointCounts {
-		if v == 1 && k != guard.position {
-			uniquePointsInPath = append(uniquePointsInPath, k)
+	for p := range maps.Keys(pointCounts) {
+		if m[p] == "." {
+			uniqueEmptySpaceInMap = append(uniqueEmptySpaceInMap, p)
 		}
 	}
 
-	for _, p := range uniquePointsInPath {
-		mp := m[p]
-		if mp == EmptySpace {
-			mNew := make(Map, len(m))
-			maps.Copy(mNew, m)
-			mNew[p] = Obstacle
-			allOptions = append(allOptions, mNew)
-		}
+	for _, p := range uniqueEmptySpaceInMap {
+		mNew := make(Map, len(m))
+		maps.Copy(mNew, m)
+		mNew[p] = Obstacle
+		allOptions = append(allOptions, mNew)
 	}
 	return allOptions
 }

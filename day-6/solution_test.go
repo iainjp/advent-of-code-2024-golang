@@ -55,3 +55,35 @@ func TestPart2(t *testing.T) {
 
 	utils.CheckEqual(got, want, t)
 }
+
+func TestAllMapOptions(t *testing.T) {
+	m := Map{
+		{0, 0}: ".",
+		{0, 1}: ".",
+		{0, 2}: ".",
+		{1, 0}: "^",
+		{1, 1}: ".",
+		{1, 2}: "#",
+		{2, 0}: ".",
+		{2, 1}: ".",
+		{2, 2}: ".",
+	}
+
+	guard := Guard{
+		position:  Point{0, 2},
+		direction: Up,
+		path: []Point{
+			{0, 1},
+			{0, 2},
+			{2, 1},
+			{1, 0},
+			{1, 2},
+		},
+		seen: make(map[Point]int),
+	}
+
+	want := 3
+	got := AllMapOptions(m, guard)
+
+	utils.CheckEqual(len(got), want, t)
+}
