@@ -145,7 +145,7 @@ func MakeGuard(c string, p Point) *Guard {
 }
 
 func main() {
-	input, _ := GetInput("input_test.txt")
+	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
