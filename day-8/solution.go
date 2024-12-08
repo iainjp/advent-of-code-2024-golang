@@ -137,43 +137,63 @@ func GetAllUniquePairs(coords []Coord) []Pair[Coord] {
 }
 
 func GetAntinodes(pair Pair[Coord]) []Coord {
-	firstXDiff := pair.first.x - pair.second.x
-	firstYDiff := pair.first.y - pair.second.y
-
-	secondXDiff := pair.second.x - pair.first.x
-	secondYDiff := pair.second.y - pair.first.y
+	xDiff := pair.first.x - pair.second.x
+	yDiff := pair.first.y - pair.second.y
 
 	first := Coord{
-		x: pair.first.x + firstXDiff,
-		y: pair.first.y + firstYDiff,
+		x: pair.first.x + xDiff,
+		y: pair.first.y + yDiff,
 	}
 
 	second := Coord{
-		x: pair.second.x + secondXDiff,
-		y: pair.second.y + secondYDiff,
+		x: pair.second.x - xDiff,
+		y: pair.second.y - yDiff,
 	}
 
 	return []Coord{first, second}
 }
 
 func GetAntinodesWithResonantHarmonics(pair Pair[Coord], pm PointMap) []Coord {
-	firstXDiff := pair.first.x - pair.second.x
-	firstYDiff := pair.first.y - pair.second.y
+	var antinodeCoords []Coord
 
-	secondXDiff := pair.second.x - pair.first.x
-	secondYDiff := pair.second.y - pair.first.y
+	// Need to also include teh antennas
+	antinodeCoords = append(antinodeCoords, pair.first)
+	antinodeCoords = append(antinodeCoords, pair.second)
 
-	first := Coord{
-		x: pair.first.x + firstXDiff,
-		y: pair.first.y + firstYDiff,
+	xDiff := pair.first.x - pair.second.x
+	yDiff := pair.first.y - pair.second.y
+
+	positive := Coord{
+		x: pair.first.x + xDiff,
+		y: pair.first.y + yDiff,
+	}
+	positivePoint := pm.Get(positive)
+	// keep adding coords in positive direction until they out out-of-bounds
+	for positivePoint != nil {
+		antinodeCoords = append(antinodeCoords, positive)
+		positive = Coord{
+			x: positive.x + xDiff,
+			y: positive.y + yDiff,
+		}
+		positivePoint = pm.Get(positive)
 	}
 
-	second := Coord{
-		x: pair.second.x + secondXDiff,
-		y: pair.second.y + secondYDiff,
+	negative := Coord{
+		x: pair.second.x - xDiff,
+		y: pair.second.y - yDiff,
+	}
+	negativePoint := pm.Get(negative)
+	// keep adding coords in negative direction until they out out-of-bounds
+	for negativePoint != nil {
+		antinodeCoords = append(antinodeCoords, negative)
+		negative = Coord{
+			x: positive.x + xDiff,
+			y: positive.y + yDiff,
+		}
+		negativePoint = pm.Get(positive)
 	}
 
-	return []Coord{first, second}
+	return antinodeCoords
 }
 
 func Part1(input *Input) int {
