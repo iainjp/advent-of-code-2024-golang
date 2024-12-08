@@ -98,8 +98,7 @@ func GetInput(filename string) (*Input, error) {
 		for x, c := range split {
 			coord := Coord{x, y}
 			point := Point{symbol: c}
-
-			pointMap.m[coord] = point
+			pointMap.Put(coord, point)
 		}
 		y += 1
 	}
@@ -156,10 +155,10 @@ func GetAntinodes(pair Pair[Coord]) Pair[Coord] {
 }
 
 func Part1(input *Input) int {
-	// TODO
 	// 1: Get all antennas
 	// 2: Get all unique pairs
-	// 3: For each pair, set the antinodes for both if in bounds
+	// 3: For each pair, if same frequency, get antinodes
+	// 4: If antinode in bounds, set antinode flag in map
 	// 4: Count unique antinodes
 
 	antennas := input.pointMap.GetAntennas()
@@ -171,14 +170,8 @@ func Part1(input *Input) int {
 
 		if first.SameFrequency(second) {
 			antinodes := GetAntinodes(pair)
-
-			firstPoint := input.pointMap.Get(antinodes.first)
-			secondPoint := input.pointMap.Get(antinodes.second)
-
-			if firstPoint != nil && secondPoint != nil {
-				input.pointMap.SetAntinodeIfInBounds(antinodes.first)
-				input.pointMap.SetAntinodeIfInBounds(antinodes.second)
-			}
+			input.pointMap.SetAntinodeIfInBounds(antinodes.first)
+			input.pointMap.SetAntinodeIfInBounds(antinodes.second)
 		}
 	}
 
