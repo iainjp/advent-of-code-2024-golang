@@ -73,6 +73,27 @@ func (t *Tree) Insert(val uint64) *Tree {
 	return t
 }
 
+func (t *Tree) GetLeafNodes() []*Node {
+
+	var leafNodes []*Node
+	var appendLeaf = func(n *Node) {
+		leafNodes = append(leafNodes, n)
+	}
+
+	t.root.GetLeafNodes(appendLeaf)
+
+	return leafNodes
+}
+
+func (n *Node) GetLeafNodes(collector func(*Node)) {
+	if n.mult == nil && n.add == nil {
+		collector(n)
+	} else {
+		n.mult.GetLeafNodes(collector)
+		n.add.GetLeafNodes(collector)
+	}
+}
+
 func (n *Node) InsertRecursive(val uint64, prev uint64) {
 	if n == nil {
 		return
