@@ -23,11 +23,18 @@ func (p *Point) IsAntenna() bool {
 	return p.symbol != "."
 }
 
-type PointMap = map[Coord]Point
+func (p *Point) SameFrequency(op *Point) bool {
+	return p.IsAntenna() && op.IsAntenna() &&
+		p.symbol == op.symbol
+}
 
-func GetAntennas(pm PointMap) []Coord {
+type PointMap struct {
+	m map[Coord]Point
+}
+
+func (pm *PointMap) GetAntennas() []Coord {
 	var antennas []Coord
-	for coord, point := range pm {
+	for coord, point := range pm.m {
 		if point.IsAntenna() {
 			antennas = append(antennas, coord)
 		}
@@ -35,22 +42,36 @@ func GetAntennas(pm PointMap) []Coord {
 	return antennas
 }
 
-func SetAntinode(pm PointMap, coord Coord) {
-	point := pm[coord]
-	point.isAntinode = true
-	pm[coord] = point
-}
-
-// TODO write test?
-func GetUniqueAntinodes(pm PointMap) []Coord {
+func (pm *PointMap) GetUniqueAntinodes() []Coord {
 	var coords []Coord
-	for k, v := range pm {
+	for k, v := range pm.m {
 		if v.isAntinode {
 			coords = append(coords, k)
 		}
 	}
 
 	return coords
+}
+
+func (pm *PointMap) SetAntinodeIfInBounds(coord Coord) {
+	point, ok := pm.m[coord]
+	if ok {
+		point.isAntinode = true
+		pm.m[coord] = point
+	}
+}
+
+func (pm *PointMap) Get(coord Coord) *Point {
+	point, ok := pm.m[coord]
+	if ok {
+		return &point
+	}
+
+	return nil
+}
+
+func (pm *PointMap) Put(coord Coord, point Point) {
+	pm.m[coord] = point
 }
 
 type Input struct {
@@ -66,7 +87,10 @@ func GetInput(filename string) (*Input, error) {
 
 	scanner := bufio.NewScanner(file)
 
-	pointMap := make(PointMap)
+	pointMap := PointMap{
+		m: make(map[Coord]Point),
+	}
+
 	y := 0
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -74,7 +98,8 @@ func GetInput(filename string) (*Input, error) {
 		for x, c := range split {
 			coord := Coord{x, y}
 			point := Point{symbol: c}
-			pointMap[coord] = point
+
+			pointMap.m[coord] = point
 		}
 		y += 1
 	}
@@ -134,18 +159,29 @@ func Part1(input *Input) int {
 	// TODO
 	// 1: Get all antennas
 	// 2: Get all unique pairs
-	// 3: For each pair, set the antinodes for both
+	// 3: For each pair, set the antinodes for both if in bounds
+	// 4: Count unique antinodes
 
-	antennas := GetAntennas(input.pointMap)
+	antennas := input.pointMap.GetAntennas()
 	aPairs := GetAllUniquePairs(antennas)
 
 	for _, pair := range aPairs {
-		antinodes := GetAntinodes(pair)
+		first := input.pointMap.Get(pair.first)
+		second := input.pointMap.Get(pair.second)
 
-		SetAntinode(input.pointMap, antinodes.first)
-		SetAntinode(input.pointMap, antinodes.second)
+		if first.SameFrequency(second) {
+			antinodes := GetAntinodes(pair)
+
+			firstPoint := input.pointMap.Get(antinodes.first)
+			secondPoint := input.pointMap.Get(antinodes.second)
+
+			if firstPoint != nil && secondPoint != nil {
+				input.pointMap.SetAntinodeIfInBounds(antinodes.first)
+				input.pointMap.SetAntinodeIfInBounds(antinodes.second)
+			}
+		}
 	}
 
-	antinodes := GetUniqueAntinodes(input.pointMap)
+	antinodes := input.pointMap.GetUniqueAntinodes()
 	return len(antinodes)
 }
