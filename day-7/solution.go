@@ -36,13 +36,13 @@ func GetInput(filename string) (*Input, error) {
 		split := strings.Split(line, ":")
 		targetTotal, _ := strconv.Atoi(split[0])
 
-		var operands []int
+		var operands []uint64
 		for _, o := range strings.Split(strings.TrimSpace(split[1]), " ") {
 			oint, _ := strconv.Atoi(o)
-			operands = append(operands, oint)
+			operands = append(operands, uint64(oint))
 		}
 
-		equations = append(equations, Equation{targetTotal, operands})
+		equations = append(equations, Equation{uint64(targetTotal), operands})
 	}
 
 	return &Input{equations: equations}, nil
@@ -54,68 +54,71 @@ func main() {
 	fmt.Printf("Part 1: got %v\n", p1Result)
 }
 
-
 type Node struct {
 	value uint64
 	mult  *Node
-	add *Node
+	add   *Node
 }
 
 type Tree struct {
 	root *Node
 }
 
-func (t *Tree) Insert(val uint64) {
-	t.InsertRecursive(t.root, val, 0)
-}
-
-func (t *Tree) InsertRecursive(node *Node, val uint64, prev uint64) *Node {
+func (t *Tree) Insert(val uint64) *Tree {
 	if t.root == nil {
-		t.root = &Node{value: val, nil, nil}
-		return t.root
+		t.root = &Node{val, nil, nil}
+	} else {
+		t.root.InsertRecursive(val, t.root.value)
 	}
-
-	if node.mult == nil {
-		node.mult = &Node{prev*val, nil, nil}
-	}
-
-	if node.add == nil {
-		node.add = &Node{prev+add, nil, nil}
-	}
-
-	t.InsertRecursive(node.mult, val, node.value)
-	t.InsertRecursive(node.add, val, node.value)
-	return node
+	return t
 }
 
+func (n *Node) InsertRecursive(val uint64, prev uint64) {
+	if n == nil {
+		return
+	}
 
+	if n.mult == nil {
+		n.mult = &Node{prev * val, nil, nil}
+	} else {
+		n.mult.InsertRecursive(val, n.mult.value)
+	}
 
-func Part1(input *Input) int {
+	if n.add == nil {
+		n.add = &Node{prev + val, nil, nil}
+	} else {
+		n.add.InsertRecursive(val, n.add.value)
+	}
+}
+
+func Part1(input *Input) uint64 {
 	// Run through all possible equations, find those that are possible, sum those results.
 	// Using a binary tree (since there's 2 options at each operand, + | *)
 	// then each child node is the result.
 	// Walk the equation and the tree, creating nodes for results. Then on to the next layer and continue.
 	// Finally, walk the tree and check if any leaf nodes equal the target total.
 
+	// for _, equation := range input.equations {
+	// 	tree := Tree{}
 
-	for _, equation := range input.equations {
-		start := Tree{
-			value: equation.operands[0],
-		}
+	// 	for _, i := range equation.operands[1:] {
+	// 		tree.Insert(i)
+	// 	}
+	// }
 
-		for i := equation.operands[1:] {
-			start.left = Multiple(i, int(start.value))
-			start.right = Add(i, int(start.value))
-
-		}
-
-	}
+	return 0
 }
 
-func Add(i, i2 int) int {
+func Add(i, i2 uint64) uint64 {
 	return i + i2
 }
 
-func Multiple(i, i2 int) int {
+func Multiple(i, i2 uint64) uint64 {
 	return i * i2
+}
+
+func CanBeSolved(eq Equation) bool {
+	// Eventually want this to create the tree, walk it, and return true if any leaf nods
+	// equal the targetTotal.
+	return true
 }
