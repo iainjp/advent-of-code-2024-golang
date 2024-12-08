@@ -15,14 +15,46 @@ type Coord struct {
 }
 
 type Point struct {
-	symbol    string   // symbol at point
-	anitnodes []*Coord // coords of antinodes (if any)
+	symbol     string // symbol at point
+	isAntinode bool
+}
+
+func (p *Point) IsAntenna() bool {
+	return p.symbol != "."
 }
 
 type PointMap = map[Coord]Point
 
+func GetAntennas(pm PointMap) []Coord {
+	var antennas []Coord
+	for coord, point := range pm {
+		if point.IsAntenna() {
+			antennas = append(antennas, coord)
+		}
+	}
+	return antennas
+}
+
+func SetAntinode(pm PointMap, coord Coord) {
+	point := pm[coord]
+	point.isAntinode = true
+	pm[coord] = point
+}
+
+// TODO write test?
+func GetUniqueAntinodes(pm PointMap) []Coord {
+	var coords []Coord
+	for k, v := range pm {
+		if v.isAntinode {
+			coords = append(coords, k)
+		}
+	}
+
+	return coords
+}
+
 type Input struct {
-	pointMap *PointMap
+	pointMap PointMap
 }
 
 func GetInput(filename string) (*Input, error) {
@@ -47,7 +79,7 @@ func GetInput(filename string) (*Input, error) {
 		y += 1
 	}
 
-	return &Input{&pointMap}, nil
+	return &Input{pointMap}, nil
 }
 
 func main() {
@@ -57,10 +89,63 @@ func main() {
 
 }
 
-func Part1(input *Input) uint64 {
+type Pair[T any] struct {
+	first, second T
+}
+
+func GetAllUniquePairs(coords []Coord) []Pair[Coord] {
+	var antennaPairs []Pair[Coord]
+
+	for i, a := range coords {
+		leftSlice := coords[:i]
+		for _, a2 := range leftSlice {
+			antennaPairs = append(antennaPairs, Pair[Coord]{a, a2})
+		}
+		rightSlice := coords[i+1:]
+		for _, a2 := range rightSlice {
+			antennaPairs = append(antennaPairs, Pair[Coord]{a, a2})
+		}
+	}
+
+	return antennaPairs
+}
+
+func GetAntinodes(pair Pair[Coord]) Pair[Coord] {
+	firstXDiff := pair.first.x - pair.second.x
+	firstYDiff := pair.first.y - pair.second.y
+
+	secondXDiff := pair.second.x - pair.first.x
+	secondYDiff := pair.second.y - pair.first.y
+
+	first := Coord{
+		x: pair.first.x + firstXDiff,
+		y: pair.first.y + firstYDiff,
+	}
+
+	second := Coord{
+		x: pair.second.x + secondXDiff,
+		y: pair.second.y + secondYDiff,
+	}
+
+	return Pair[Coord]{first, second}
+}
+
+func Part1(input *Input) int {
 	// TODO
 	// 1: Get all antennas
-	// 2: For each, calculate the antinodes of all others (oof)
+	// 2: Get all unique pairs
+	// 3: For each pair, set the antinodes for both
 
-	return 0
+	antennas := GetAntennas(input.pointMap)
+	aPairs := GetAllUniquePairs(antennas)
+
+	for _, pair := range aPairs {
+		antinodes := GetAntinodes(pair)
+
+		SetAntinode(input.pointMap, antinodes.first)
+		SetAntinode(input.pointMap, antinodes.second)
+	}
+
+	antinodes := GetUniqueAntinodes(input.pointMap)
+	return len(antinodes)
 }
