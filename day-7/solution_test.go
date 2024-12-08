@@ -116,4 +116,17 @@ func TestTree(t *testing.T) {
 
 		utils.CheckEqual(gotValues, wantedValues, t)
 	})
+
+	t.Run("get leaf node values", func(t *testing.T) {
+		tree := Tree{}
+		tree.Insert(2)
+		tree.Insert(3)
+		tree.Insert(4)
+
+		wantedValues := []uint64{24, 10, 20, 9}
+
+		gotValues := tree.GetLeadNodeValues()
+
+		utils.CheckEqual(gotValues, wantedValues, t)
+	})
 }

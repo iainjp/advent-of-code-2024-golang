@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -85,6 +86,16 @@ func (t *Tree) GetLeafNodes() []*Node {
 	return leafNodes
 }
 
+func (t *Tree) GetLeadNodeValues() []uint64 {
+	var leafNodeValues []uint64
+	var appendValue = func(n *Node) {
+		leafNodeValues = append(leafNodeValues, n.value)
+	}
+
+	t.root.GetLeafNodes(appendValue)
+	return leafNodeValues
+}
+
 func (n *Node) GetLeafNodes(collector func(*Node)) {
 	if n.mult == nil && n.add == nil {
 		collector(n)
@@ -119,27 +130,24 @@ func Part1(input *Input) uint64 {
 	// Walk the equation and the tree, creating nodes for results. Then on to the next layer and continue.
 	// Finally, walk the tree and check if any leaf nodes equal the target total.
 
-	// for _, equation := range input.equations {
-	// 	tree := Tree{}
+	sumOfSolvableEquations := uint64(0)
 
-	// 	for _, i := range equation.operands[1:] {
-	// 		tree.Insert(i)
-	// 	}
-	// }
+	for _, eq := range input.equations {
+		if CanBeSolved(eq) {
+			sumOfSolvableEquations += eq.targetTotal
+		}
+	}
 
-	return 0
-}
-
-func Add(i, i2 uint64) uint64 {
-	return i + i2
-}
-
-func Multiple(i, i2 uint64) uint64 {
-	return i * i2
+	return sumOfSolvableEquations
 }
 
 func CanBeSolved(eq Equation) bool {
-	// Eventually want this to create the tree, walk it, and return true if any leaf nods
-	// equal the targetTotal.
-	return true
+	tree := Tree{}
+	for _, n := range eq.operands {
+		tree.Insert(n)
+	}
+
+	possibleResults := tree.GetLeadNodeValues()
+
+	return slices.Contains(possibleResults, eq.targetTotal)
 }
