@@ -111,6 +111,8 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
 }
 
 type Pair[T any] struct {
@@ -134,7 +136,7 @@ func GetAllUniquePairs(coords []Coord) []Pair[Coord] {
 	return antennaPairs
 }
 
-func GetAntinodes(pair Pair[Coord]) Pair[Coord] {
+func GetAntinodes(pair Pair[Coord]) []Coord {
 	firstXDiff := pair.first.x - pair.second.x
 	firstYDiff := pair.first.y - pair.second.y
 
@@ -151,7 +153,27 @@ func GetAntinodes(pair Pair[Coord]) Pair[Coord] {
 		y: pair.second.y + secondYDiff,
 	}
 
-	return Pair[Coord]{first, second}
+	return []Coord{first, second}
+}
+
+func GetAntinodesWithResonantHarmonics(pair Pair[Coord], pm PointMap) []Coord {
+	firstXDiff := pair.first.x - pair.second.x
+	firstYDiff := pair.first.y - pair.second.y
+
+	secondXDiff := pair.second.x - pair.first.x
+	secondYDiff := pair.second.y - pair.first.y
+
+	first := Coord{
+		x: pair.first.x + firstXDiff,
+		y: pair.first.y + firstYDiff,
+	}
+
+	second := Coord{
+		x: pair.second.x + secondXDiff,
+		y: pair.second.y + secondYDiff,
+	}
+
+	return []Coord{first, second}
 }
 
 func Part1(input *Input) int {
@@ -170,8 +192,35 @@ func Part1(input *Input) int {
 
 		if first.SameFrequency(second) {
 			antinodes := GetAntinodes(pair)
-			input.pointMap.SetAntinodeIfInBounds(antinodes.first)
-			input.pointMap.SetAntinodeIfInBounds(antinodes.second)
+			for _, an := range antinodes {
+				input.pointMap.SetAntinodeIfInBounds(an)
+			}
+		}
+	}
+
+	antinodes := input.pointMap.GetUniqueAntinodes()
+	return len(antinodes)
+}
+
+func Part2(input *Input) int {
+	// 1: Get all antennas
+	// 2: Get all unique pairs
+	// 3: For each pair, if same frequency, get all resonant antinodes
+	// 4: For each antinode in bounds, set antinode flag in map (including on Antenna)
+	// 4: Count unique antinodes
+
+	antennas := input.pointMap.GetAntennas()
+	aPairs := GetAllUniquePairs(antennas)
+
+	for _, pair := range aPairs {
+		first := input.pointMap.Get(pair.first)
+		second := input.pointMap.Get(pair.second)
+
+		if first.SameFrequency(second) {
+			antinodes := GetAntinodesWithResonantHarmonics(pair, input.pointMap)
+			for _, an := range antinodes {
+				input.pointMap.SetAntinodeIfInBounds(an)
+			}
 		}
 	}
 

@@ -133,14 +133,17 @@ func TestGetAntinodes(t *testing.T) {
 			Coord{6, 6},
 		}
 
-		want := Pair[Coord]{
-			Coord{2, 2},
-			Coord{8, 8},
+		want := []Coord{
+			{2, 2},
+			{8, 8},
 		}
 
 		got := GetAntinodes(input)
 
-		utils.CheckEqual(got, want, t)
+		for _, want := range want {
+			utils.CheckContains(got, want, t)
+		}
+
 	})
 
 	t.Run("other direction pair", func(t *testing.T) {
@@ -149,15 +152,21 @@ func TestGetAntinodes(t *testing.T) {
 			Coord{6, 4},
 		}
 
-		want := Pair[Coord]{
-			Coord{2, 8},
-			Coord{8, 2},
+		want := []Coord{
+			{2, 8},
+			{8, 2},
 		}
 
 		got := GetAntinodes(input)
 
-		utils.CheckEqual(got, want, t)
+		for _, want := range want {
+			utils.CheckContains(got, want, t)
+		}
 	})
+}
+
+func TestGetAntinodesWithResonantHarmonics(t *testing.T) {
+
 }
 
 func TestPart1(t *testing.T) {
@@ -165,6 +174,15 @@ func TestPart1(t *testing.T) {
 
 	want := 14
 	got := Part1(input)
+
+	utils.CheckEqual(got, want, t)
+}
+
+func TestPart2(t *testing.T) {
+	input, _ := GetInput("input_test.txt")
+
+	want := 34
+	got := Part2(input)
 
 	utils.CheckEqual(got, want, t)
 }
