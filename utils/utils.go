@@ -75,3 +75,13 @@ func CheckNotNil[K any](got *K, t testing.TB) {
 		t.Fatal("expected not nil, got nil")
 	}
 }
+
+func CheckSlicesHaveSameElements[S ~[]E, E comparable](s1 S, s2 S, t testing.TB) {
+	t.Helper()
+	CheckEqual(len(s1), len(s2), t)
+	for _, e := range s1 {
+		if !slices.Contains(s2, e) {
+			t.Fatalf("slice does not contain required element %v", e)
+		}
+	}
+}
