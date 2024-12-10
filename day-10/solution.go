@@ -69,6 +69,34 @@ func (g *Graph) Walk() []Result {
 	return uniqueResults
 }
 
+// Walk from each trailhead, return count of finishes per trailhead
+func (g *Graph) WalkNonUnique() map[*Node]int {
+
+	// Map of *Node -> number of 9s in trails (e.g. finishes)
+	nodeFinishes := make(map[*Node]int)
+	recordNodeFinishes := func(head *Node) {
+		old := nodeFinishes[head]
+		nodeFinishes[head] = old + 1
+	}
+
+	var dfs func(head *Node, n *Node, collector func(h *Node))
+	dfs = func(head *Node, currNode *Node, collector func(h *Node)) {
+		if currNode.height == 9 {
+			collector(head)
+		}
+		for _, nn := range currNode.next {
+			dfs(head, nn, collector)
+		}
+	}
+
+	// run DFS from each trailhead
+	for _, th := range g.trailheads {
+		dfs(th, th, recordNodeFinishes)
+	}
+
+	return nodeFinishes
+}
+
 type Input struct {
 	graph Graph
 }
@@ -78,6 +106,8 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
 }
 
 func GetInput(filename string) (*Input, error) {
@@ -150,4 +180,15 @@ func GetInput(filename string) (*Input, error) {
 func Part1(input *Input) int {
 	results := input.graph.Walk()
 	return len(results)
+}
+
+func Part2(input *Input) int {
+	results := input.graph.WalkNonUnique()
+
+	fullCount := 0
+	for _, count := range results {
+		fullCount += count
+	}
+
+	return fullCount
 }
