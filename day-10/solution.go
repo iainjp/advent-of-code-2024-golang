@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strconv"
 	"strings"
+
+	"iain.fyi/aoc2024/utils"
 )
 
 var ErrInputFile = errors.New("cannot open input file")
@@ -22,6 +25,33 @@ func (n *Node) IsValidNext(on *Node) bool {
 
 type Graph struct {
 	trailheads []*Node
+}
+
+// Walk from each trailhead, return count of finishes per trailhead
+func (g *Graph) Walk() map[*Node]int {
+
+	// collection of trailhead, X occurrences = X finishes
+	var trailheadFinished []*Node
+	collect := func(n *Node) {
+		trailheadFinished = append(trailheadFinished, n)
+	}
+
+	var dfs func(head *Node, n *Node, collector func(n *Node))
+	dfs = func(head *Node, n *Node, collector func(n *Node)) {
+		if n.height == 9 {
+			collector(head)
+		}
+		for _, nn := range n.next {
+			dfs(head, nn, collector)
+		}
+	}
+
+	// run DFS from each trailhead
+	for _, th := range g.trailheads {
+		dfs(th, th, collect)
+	}
+
+	return utils.CountOccurences(trailheadFinished)
 }
 
 type Input struct {
@@ -103,5 +133,12 @@ func GetInput(filename string) (*Input, error) {
 }
 
 func Part1(input *Input) int {
-	return len(input.graph.trailheads)
+	finishes := input.graph.Walk()
+
+	total := 0
+	for v := range maps.Values(finishes) {
+		total += v
+	}
+
+	return total
 }
