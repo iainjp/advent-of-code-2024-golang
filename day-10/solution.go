@@ -27,21 +27,30 @@ type Graph struct {
 	trailheads []*Node
 }
 
+// Marking trail with head and final node
+type Result struct {
+	head, finish *Node
+}
+
 // Walk from each trailhead, return count of finishes per trailhead
-func (g *Graph) Walk() map[*Node]int {
+func (g *Graph) Walk() []Result {
 
 	// collection of trailhead, X occurrences = X finishes
-	var trailheadFinished []*Node
-	collect := func(n *Node) {
-		trailheadFinished = append(trailheadFinished, n)
+	var results []Result
+	collect := func(r Result) {
+		results = append(results, r)
 	}
 
-	var dfs func(head *Node, n *Node, collector func(n *Node))
-	dfs = func(head *Node, n *Node, collector func(n *Node)) {
-		if n.height == 9 {
-			collector(head)
+	// map of Node -> finishes
+	// var scores map[*Node]int
+
+	var dfs func(head *Node, n *Node, collector func(r Result))
+	dfs = func(head *Node, currNode *Node, collector func(R Result)) {
+		if currNode.height == 9 {
+			result := Result{head: head, finish: currNode}
+			collector(result)
 		}
-		for _, nn := range n.next {
+		for _, nn := range currNode.next {
 			dfs(head, nn, collector)
 		}
 	}
@@ -51,7 +60,13 @@ func (g *Graph) Walk() map[*Node]int {
 		dfs(th, th, collect)
 	}
 
-	return utils.CountOccurences(trailheadFinished)
+	resultCounts := utils.CountOccurences(results)
+	var uniqueResults []Result
+	for r := range maps.Keys(resultCounts) {
+		uniqueResults = append(uniqueResults, r)
+	}
+
+	return uniqueResults
 }
 
 type Input struct {
@@ -133,12 +148,6 @@ func GetInput(filename string) (*Input, error) {
 }
 
 func Part1(input *Input) int {
-	finishes := input.graph.Walk()
-
-	total := 0
-	for v := range maps.Values(finishes) {
-		total += v
-	}
-
-	return total
+	results := input.graph.Walk()
+	return len(results)
 }
