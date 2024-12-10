@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"iter"
 	"reflect"
 	"slices"
 	"testing"
@@ -84,4 +85,12 @@ func CheckSlicesHaveSameElements[S ~[]E, E comparable](s1 S, s2 S, t testing.TB)
 			t.Fatalf("slice does not contain required element %v", e)
 		}
 	}
+}
+
+func IterToSlice[E any, B any](it iter.Seq2[B, E]) []E {
+	var es []E
+	for _, ei := range it {
+		es = append(es, ei)
+	}
+	return es
 }

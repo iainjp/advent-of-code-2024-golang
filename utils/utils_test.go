@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -131,6 +132,16 @@ func TestCountOccurences(t *testing.T) {
 	got := CountOccurences(input)
 
 	CheckEquals(got, want, t)
+}
+
+func TestIterToSlice(t *testing.T) {
+	input := slices.Backward([]int{1, 2, 3})
+
+	got := IterToSlice(input)
+
+	CheckEquals(got[0], 3, t)
+	CheckEquals(got[1], 2, t)
+	CheckEquals(got[2], 1, t)
 }
 
 func CheckEquals[T any](got, want T, t testing.TB) {
