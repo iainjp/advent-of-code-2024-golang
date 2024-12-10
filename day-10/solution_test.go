@@ -7,7 +7,12 @@ import (
 )
 
 func TestGetInput(t *testing.T) {
-	got, _ := GetInput("input_test.txt")
+	t.Run("graph contains 9 trailheads", func(t *testing.T) {
+		got, _ := GetInput("input_test.txt")
 
-	utils.CheckEqual(len(got.graph.trailheads), 9, t)
+		utils.CheckEqual(len(got.graph.trailheads), 9, t)
+		for _, th := range got.graph.trailheads {
+			utils.CheckEqual(th.height, 0, t)
+		}
+	})
 }

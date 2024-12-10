@@ -13,7 +13,11 @@ var ErrInputFile = errors.New("cannot open input file")
 
 type Node struct {
 	height int
-	next   map[int]*Node
+	next   []*Node
+}
+
+func (n *Node) IsValidNext(on *Node) bool {
+	return n.height-on.height == 1
 }
 
 type Graph struct {
@@ -43,6 +47,7 @@ func GetInput(filename string) (*Input, error) {
 
 	var nodeMatrix [][]*Node
 
+	// build initial nodeMatrix
 	for scanner.Scan() {
 		line := scanner.Text()
 		var nodeLine []*Node
@@ -57,7 +62,42 @@ func GetInput(filename string) (*Input, error) {
 		nodeMatrix = append(nodeMatrix, nodeLine)
 	}
 
-	// TODO other loop to set next field values
+	// set up neighbours
+	for outerIdx, nodeLine := range nodeMatrix {
+		for innerIdx, currNode := range nodeLine {
+			// left
+			if innerIdx > 0 {
+				left := nodeLine[innerIdx-1]
+				if left.IsValidNext(currNode) {
+					currNode.next = append(currNode.next, left)
+				}
+			}
+
+			// right
+			if innerIdx < len(nodeLine)-1 {
+				right := nodeLine[innerIdx+1]
+				if right.IsValidNext(currNode) {
+					currNode.next = append(currNode.next, right)
+				}
+			}
+
+			// up
+			if outerIdx > 0 {
+				up := nodeMatrix[outerIdx-1][innerIdx]
+				if up.IsValidNext(currNode) {
+					currNode.next = append(currNode.next, up)
+				}
+			}
+
+			// down
+			if outerIdx < len(nodeMatrix)-1 {
+				down := nodeMatrix[outerIdx+1][innerIdx]
+				if down.IsValidNext(currNode) {
+					currNode.next = append(currNode.next, down)
+				}
+			}
+		}
+	}
 
 	return &Input{graph: Graph{trailheads: trailheads}}, nil
 }
