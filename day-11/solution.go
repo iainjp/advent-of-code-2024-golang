@@ -97,39 +97,55 @@ func (sl *StoneLine) Count() int {
 	return len(asSlice)
 }
 
-func BlinkTimes(num int, times int, increment func()) {
-	// fmt.Printf("BlinkTimes(%v, %v)\n", num, times)
-	if times <= 0 {
-		// fmt.Printf("\t%v <= 0, returning 0\n", times)
-		return
+func SumValues(m *map[int]int) int {
+	sum := 0
+	for _, v := range *m {
+		sum += v
+	}
+	return sum
+}
+
+func BlinkTimes(nums []int, times int) int {
+	numbersSeen := make(map[int]int)
+	for _, n := range nums {
+		numbersSeen[n] += 1
 	}
 
-	// stoneCountDiff := 0
+	blinks := 0
 
-	numSlice := strings.Split(strconv.Itoa(num), "")
-	lenS := len(numSlice)
+	for {
+		newNumbers := make(map[int]int)
+		for k, v := range numbersSeen {
+			delete(numbersSeen, k)
 
-	blinksRemaining := times - 1
+			numSlice := strings.Split(strconv.Itoa(k), "")
+			lenK := len(numSlice)
 
-	if num == 0 {
-		// fmt.Printf("\t%v -> %v\n", num, 1)
-		BlinkTimes(1, blinksRemaining, increment)
-	} else if lenS%2 == 0 {
+			if k == 0 {
+				newNumbers[1] += v
+			} else if lenK%2 == 0 {
+				leftHalfNums := numSlice[0 : lenK/2]
+				rightHalfNums := numSlice[lenK/2:]
 
-		leftHalfNums := numSlice[0 : lenS/2]
-		rightHalfNums := numSlice[lenS/2:]
+				leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
+				rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
+				newNumbers[leftHalf] += v
+				newNumbers[rightHalf] += v
+			} else {
+				newNumbers[k*2024] += v
+			}
+		}
 
-		leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
-		rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
+		for k, v := range newNumbers {
+			numbersSeen[k] += v
+		}
 
-		// fmt.Printf("\t%v -> %v + %v\n", num, leftHalf, rightHalf)
-		increment()
-		BlinkTimes(leftHalf, blinksRemaining, increment)
-		BlinkTimes(rightHalf, blinksRemaining, increment)
-	} else {
-		newCurr := num * 2024
-		// fmt.Printf("\t%v -> %v\n", num, newCurr)
-		BlinkTimes(newCurr, blinksRemaining, increment)
+		blinks++
+
+		if blinks >= times {
+			sum := SumValues(&newNumbers)
+			return sum
+		}
 	}
 
 }
@@ -181,19 +197,7 @@ func (s *Stone) BlinkTimes(times int) int {
 
 // Get the number of stones from blinking `times` times, without keeping LL in memory
 func (sl *StoneLine) SimulateBlinkTimes(times int) int {
-	count := len(sl.GetNumbers())
-	var counter = func() {
-		// fmt.Printf("Incrementing counter to %v\n", count+1)
-		count += 1
-	}
-
-	stones := sl.ToSlice()
-	for _, stone := range stones {
-		num := stone.number
-		BlinkTimes(num, times, counter)
-	}
-
-	return count
+	return BlinkTimes(sl.GetNumbers(), times)
 }
 
 // build LinkedList of stones, returning head
