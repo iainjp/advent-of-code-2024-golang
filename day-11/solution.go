@@ -97,63 +97,41 @@ func (sl *StoneLine) Count() int {
 	return len(asSlice)
 }
 
-// Blink `times` times for `num` (without newing up Stone structs), return diff of number of stones
-// TODO add memoization
-
-// type CacheKey struct {
-// 	number int
-// 	times  int
-// }
-
-// var cache = make(map[CacheKey]int)
-
-func BlinkTimes(num int, times int) int {
+func BlinkTimes(num int, times int, increment func()) {
+	// fmt.Printf("BlinkTimes(%v, %v)\n", num, times)
 	if times <= 0 {
-		return 0
+		// fmt.Printf("\t%v <= 0, returning 0\n", times)
+		return
 	}
 
-	// hacky memoization - think it's borked tbh
-	// cacheKey := CacheKey{number: num, times: times}
-	// v, ok := cache[cacheKey]
-	// if ok {
-	// 	return v
-	// }
-
-	stoneCountDiff := 0
+	// stoneCountDiff := 0
 
 	numSlice := strings.Split(strconv.Itoa(num), "")
 	lenS := len(numSlice)
 
-	for i := range times {
-		// got to add 2 not 1, since it would start blinking on _next_ blink, not current.
-		blinksForNewStones := times - (i + 2)
+	blinksRemaining := times - 1
 
-		// var result int
-		// cacheKey = CacheKey{num, blinksForNewStones}
+	if num == 0 {
+		// fmt.Printf("\t%v -> %v\n", num, 1)
+		BlinkTimes(1, blinksRemaining, increment)
+	} else if lenS%2 == 0 {
 
-		if num == 0 {
-			stoneCountDiff += BlinkTimes(1, blinksForNewStones)
-		} else if lenS%2 == 0 {
-			stoneCountDiff += 1
+		leftHalfNums := numSlice[0 : lenS/2]
+		rightHalfNums := numSlice[lenS/2:]
 
-			leftHalfNums := numSlice[0 : lenS/2]
-			rightHalfNums := numSlice[lenS/2:]
+		leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
+		rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
 
-			leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
-			rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
-
-			leftResult := BlinkTimes(leftHalf, blinksForNewStones)
-			rightResult := BlinkTimes(rightHalf, blinksForNewStones)
-			stoneCountDiff += leftResult + rightResult
-
-		} else {
-			newCurr := num * 2024
-			stoneCountDiff += BlinkTimes(newCurr, blinksForNewStones)
-		}
-		// cache[cacheKey] = result
+		// fmt.Printf("\t%v -> %v + %v\n", num, leftHalf, rightHalf)
+		increment()
+		BlinkTimes(leftHalf, blinksRemaining, increment)
+		BlinkTimes(rightHalf, blinksRemaining, increment)
+	} else {
+		newCurr := num * 2024
+		// fmt.Printf("\t%v -> %v\n", num, newCurr)
+		BlinkTimes(newCurr, blinksRemaining, increment)
 	}
 
-	return stoneCountDiff
 }
 
 // Blink `times` times, return diff of numbers of stones
@@ -174,7 +152,7 @@ func (s *Stone) BlinkTimes(times int) int {
 
 		if current == 0 {
 			newStone := Stone{number: 1}
-			fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
+			// fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
 			stoneCountDiff += newStone.BlinkTimes(blinksToGo)
 		} else if lenS%2 == 0 {
 			stoneCountDiff += 1
@@ -187,13 +165,13 @@ func (s *Stone) BlinkTimes(times int) int {
 
 			rightStone := Stone{number: rightHalf}
 			leftStone := Stone{number: leftHalf}
-			fmt.Printf("Adding counts for %v, %v times\n", rightStone, blinksToGo)
+			// fmt.Printf("Adding counts for %v, %v times\n", rightStone, blinksToGo)
 			stoneCountDiff += rightStone.BlinkTimes(blinksToGo)
-			fmt.Printf("Adding counts for %v, %v times\n", leftStone, blinksToGo)
+			// fmt.Printf("Adding counts for %v, %v times\n", leftStone, blinksToGo)
 			stoneCountDiff += leftStone.BlinkTimes(blinksToGo)
 		} else {
 			newStone := Stone{number: current * 2024}
-			fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
+			// fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
 			stoneCountDiff += newStone.BlinkTimes(blinksToGo)
 		}
 	}
@@ -204,11 +182,15 @@ func (s *Stone) BlinkTimes(times int) int {
 // Get the number of stones from blinking `times` times, without keeping LL in memory
 func (sl *StoneLine) SimulateBlinkTimes(times int) int {
 	count := len(sl.GetNumbers())
+	var counter = func() {
+		// fmt.Printf("Incrementing counter to %v\n", count+1)
+		count += 1
+	}
 
 	stones := sl.ToSlice()
 	for _, stone := range stones {
 		num := stone.number
-		count += BlinkTimes(num, times)
+		BlinkTimes(num, times, counter)
 	}
 
 	return count

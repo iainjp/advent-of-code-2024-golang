@@ -89,26 +89,29 @@ func TestStoneLine(t *testing.T) {
 	}
 
 	inputs := []testInput{
-		{"len(BlinkTimes(1)) == SimulateBlinkTimes(1)", []int{125, 17}, 1, 3},
-		{"len(BlinkTimes(2)) == SimulateBlinkTimes(2)", []int{125, 17}, 2, 4},
-		{"len(BlinkTimes(3)) == SimulateBlinkTimes(3)", []int{125, 17}, 3, 5},
-		{"len(BlinkTimes(4)) == SimulateBlinkTimes(4)", []int{125, 17}, 4, 9},
-		{"len(BlinkTimes(5)) == SimulateBlinkTimes(5)", []int{125, 17}, 5, 13},
-		{"len(BlinkTimes(6)) == SimulateBlinkTimes(6)", []int{125, 17}, 6, 22},
-		{"len(BlinkTimes(7)) == SimulateBlinkTimes(7)", []int{125, 17}, 7, 31},
-		{"len(BlinkTimes(8)) == SimulateBlinkTimes(8)", []int{125, 17}, 8, 42},
-		{"len(BlinkTimes(25)) == SimulateBlinkTimes(25)", []int{125, 17}, 25, 55312},
+		{"SimulateBlinkTimes(1) == 3", []int{125, 17}, 1, 3},
+		{"SimulateBlinkTimes(2) == 4", []int{125, 17}, 2, 4},
+		{"SimulateBlinkTimes(3) == 5", []int{125, 17}, 3, 5},
+		{"SimulateBlinkTimes(4) == 9", []int{125, 17}, 4, 9},
+		{"SimulateBlinkTimes(5) == 13", []int{125, 17}, 5, 13},
+		{"SimulateBlinkTimes(6) == 22", []int{125, 17}, 6, 22},
+		{"SimulateBlinkTimes(7) == 31", []int{125, 17}, 7, 31},
+		{"SimulateBlinkTimes(8) == 42", []int{125, 17}, 8, 42},
+		{"SimulateBlinkTimes(25) == 55312", []int{125, 17}, 25, 55312},
 	}
+
+	t.Run("SimulateBlinkTimes(4) == 9", func(t *testing.T) {
+		stoneLine := BuildStones([]int{125, 17})
+		got := stoneLine.SimulateBlinkTimes(4)
+
+		utils.CheckEqual(got, 9, t)
+	})
 
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
-			wantStoneLine := BuildStones(tt.ints)
-			want := wantStoneLine.BlinkTimes(tt.blinks).Count()
-
 			stoneLine := BuildStones([]int{125, 17})
 			got := stoneLine.SimulateBlinkTimes(tt.blinks)
 
-			utils.CheckEqual(want, tt.want, t)
 			utils.CheckEqual(got, tt.want, t)
 		})
 	}
