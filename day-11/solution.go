@@ -45,6 +45,70 @@ func (sl *StoneLine) GetNumbers() []int {
 	return resultSlice
 }
 
+func (sl *StoneLine) Blink() {
+	current := sl.head
+
+	for current != nil {
+		numSlice := strings.Split(strconv.Itoa(current.number), "")
+		lenS := len(numSlice)
+
+		if current.number == 0 {
+			current.number = 1
+
+			current = current.next
+		} else if lenS%2 == 0 {
+			// re-using current as left stone
+			leftStone := current
+
+			leftHalfNums := numSlice[0 : lenS/2]
+			rightHalfNums := numSlice[lenS/2:]
+
+			leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
+			rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
+
+			rightStone := Stone{number: rightHalf}
+			rightStone.prev = leftStone
+			rightStone.next = leftStone.next
+
+			leftStone.number = leftHalf
+			leftStone.next = &rightStone
+
+			current = rightStone.next
+		} else {
+			current.number = current.number * 2024
+
+			current = current.next
+		}
+	}
+}
+
+// Helper method to blink X times
+func (sl *StoneLine) BlinkTimes(times int) {
+	for range times {
+		sl.Blink()
+	}
+}
+
+// build LinkedList of stones, returning head
+func BuildStones(ints []int) *StoneLine {
+	var head *Stone
+	var prev *Stone
+	for i, n := range ints {
+		stone := &Stone{
+			number: n,
+		}
+		if i == 0 {
+			head = stone
+		} else {
+			stone.prev = prev
+			prev.next = stone
+		}
+		prev = stone
+	}
+
+	return &StoneLine{head: head}
+}
+
 type Input struct {
 	stones []int
 }
@@ -70,26 +134,6 @@ func GetInput(filename string) (*Input, error) {
 	return &Input{stones: stones}, nil
 }
 
-// build LinkedList of stones, returning head
-func BuildStones(ints []int) *StoneLine {
-	var head *Stone
-	var prev *Stone
-	for i, n := range ints {
-		stone := &Stone{
-			number: n,
-		}
-		if i == 0 {
-			head = stone
-		} else {
-			stone.prev = prev
-			prev.next = stone
-		}
-		prev = stone
-	}
-
-	return &StoneLine{head: head}
-}
-
 func main() {
 	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
@@ -97,5 +141,9 @@ func main() {
 }
 
 func Part1(input *Input) int {
-	return 0
+	stoneList := BuildStones(input.stones)
+
+	stoneList.BlinkTimes(25)
+
+	return len(stoneList.ToSlice())
 }

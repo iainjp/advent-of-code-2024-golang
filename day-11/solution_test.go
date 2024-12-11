@@ -59,4 +59,34 @@ func TestStoneLine(t *testing.T) {
 		utils.CheckSlicesHaveSameElements(got, want, t)
 	})
 
+	t.Run("Blink()", func(t *testing.T) {
+		stoneLine := BuildStones([]int{0, 1, 10, 99, 999})
+		want := []int{1, 2024, 1, 0, 9, 9, 2021976}
+
+		stoneLine.Blink()
+
+		got := stoneLine.GetNumbers()
+
+		utils.CheckSlicesHaveSameElements(got, want, t)
+	})
+
+	t.Run("BlinkTimes(6)", func(t *testing.T) {
+		stoneLine := BuildStones([]int{125, 17})
+		want := []int{2097446912, 14168, 4048, 2, 0, 2, 4, 40, 48, 2024, 40, 48, 80, 96, 2, 8, 6, 7, 6, 0, 3, 2}
+
+		stoneLine.BlinkTimes(6)
+
+		got := stoneLine.GetNumbers()
+
+		utils.CheckSlicesHaveSameElements(got, want, t)
+	})
+}
+
+func TestPart1(t *testing.T) {
+	want := 55312
+
+	input, _ := GetInput("input_test.txt")
+	got := Part1(input)
+
+	utils.CheckEqual(got, want, t)
 }
