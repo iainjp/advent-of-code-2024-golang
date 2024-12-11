@@ -84,8 +84,9 @@ func (sl *StoneLine) Blink() {
 
 // Helper method to blink X times
 func (sl *StoneLine) BlinkTimes(times int) {
-	for range times {
+	for time := range times {
 		sl.Blink()
+		fmt.Printf("Blink #%v done\n", time)
 	}
 }
 
@@ -138,12 +139,23 @@ func main() {
 	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
+
+	p2Result := Part2(input)
+	fmt.Printf("Part 1: got %v\n", p2Result)
 }
 
 func Part1(input *Input) int {
 	stoneList := BuildStones(input.stones)
 
 	stoneList.BlinkTimes(25)
+
+	return len(stoneList.ToSlice())
+}
+
+func Part2(input *Input) int {
+	stoneList := BuildStones(input.stones)
+
+	stoneList.BlinkTimes(75)
 
 	return len(stoneList.ToSlice())
 }
