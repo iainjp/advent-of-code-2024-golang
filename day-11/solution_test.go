@@ -80,6 +80,38 @@ func TestStoneLine(t *testing.T) {
 
 		utils.CheckSlicesHaveSameElements(got, want, t)
 	})
+
+	t.Run("len(BlinkTimes(1)) == SimulateBlinkTimes(1)", func(t *testing.T) {
+		stoneLine := BuildStones([]int{125, 17})
+		want := 3
+		got := stoneLine.SimulateBlinkTimes(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("len(BlinkTimes(2)) == SimulateBlinkTimes(2)", func(t *testing.T) {
+		stoneLine := BuildStones([]int{125, 17})
+		want := 4
+		got := stoneLine.SimulateBlinkTimes(2)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("len(BlinkTimes(6)) == SimulateBlinkTimes(6)", func(t *testing.T) {
+		stoneLine := BuildStones([]int{125, 17})
+		want := 22
+		got := stoneLine.SimulateBlinkTimes(6)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("len(BlinkTimes(25)) == SimulateBlinkTimes(25)", func(t *testing.T) {
+		stoneLine := BuildStones([]int{4, 4841539, 66, 5279, 49207, 134, 609568, 0})
+		want := 212655
+		got := stoneLine.SimulateBlinkTimes(25)
+
+		utils.CheckEqual(got, want, t)
+	})
 }
 
 func TestPart1(t *testing.T) {

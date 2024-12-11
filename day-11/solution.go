@@ -90,6 +90,106 @@ func (sl *StoneLine) BlinkTimes(times int) {
 	}
 }
 
+// Blink `times` times for `num` (without newing up Stone structs), return diff of number of stones
+// TODO add memoization
+func BlinkTimes(num int, times int) int {
+	if times == 0 {
+		return 0
+	}
+
+	stoneCountDiff := 0
+
+	numSlice := strings.Split(strconv.Itoa(num), "")
+	lenS := len(numSlice)
+
+	for i := range times {
+		// got to add 2 not 1, since it would start blinking on _next_ blink, not current.
+		blinksToGo := times - (i + 2)
+
+		if num == 0 {
+			fmt.Printf("Adding counts for %v, %v times\n", 1, blinksToGo)
+			stoneCountDiff += BlinkTimes(1, blinksToGo)
+		} else if lenS%2 == 0 {
+			stoneCountDiff += 1
+
+			leftHalfNums := numSlice[0 : lenS/2]
+			rightHalfNums := numSlice[lenS/2:]
+
+			leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
+			rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
+
+			fmt.Printf("Adding counts for %v, %v times\n", rightHalf, blinksToGo)
+			stoneCountDiff += BlinkTimes(rightHalf, blinksToGo)
+			fmt.Printf("Adding counts for %v, %v times\n", leftHalf, blinksToGo)
+			stoneCountDiff += BlinkTimes(leftHalf, blinksToGo)
+		} else {
+			newCurr := num * 2024
+			fmt.Printf("Adding counts for %v, %v times\n", newCurr, blinksToGo)
+			stoneCountDiff += BlinkTimes(newCurr, blinksToGo)
+		}
+	}
+
+	return stoneCountDiff
+}
+
+// Blink `times` times, return diff of numbers of stones
+func (s *Stone) BlinkTimes(times int) int {
+	if times == 0 {
+		return 0
+	}
+
+	stoneCountDiff := 0
+	current := s.number
+
+	numSlice := strings.Split(strconv.Itoa(current), "")
+	lenS := len(numSlice)
+
+	for i := range times {
+		// got to add 2 not 1, since it would start blinking on _next_ blink, not current.
+		blinksToGo := times - (i + 2)
+
+		if current == 0 {
+			newStone := Stone{number: 1}
+			fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
+			stoneCountDiff += newStone.BlinkTimes(blinksToGo)
+		} else if lenS%2 == 0 {
+			stoneCountDiff += 1
+
+			leftHalfNums := numSlice[0 : lenS/2]
+			rightHalfNums := numSlice[lenS/2:]
+
+			leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
+			rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
+
+			rightStone := Stone{number: rightHalf}
+			leftStone := Stone{number: leftHalf}
+			fmt.Printf("Adding counts for %v, %v times\n", rightStone, blinksToGo)
+			stoneCountDiff += rightStone.BlinkTimes(blinksToGo)
+			fmt.Printf("Adding counts for %v, %v times\n", leftStone, blinksToGo)
+			stoneCountDiff += leftStone.BlinkTimes(blinksToGo)
+		} else {
+			newStone := Stone{number: current * 2024}
+			fmt.Printf("Adding counts for %v, %v times\n", newStone, blinksToGo)
+			stoneCountDiff += newStone.BlinkTimes(blinksToGo)
+		}
+	}
+
+	return stoneCountDiff
+}
+
+// Get the number of stones from blinking `times` times, without keeping LL in memory
+func (sl *StoneLine) SimulateBlinkTimes(times int) int {
+	count := len(sl.GetNumbers())
+
+	stones := sl.ToSlice()
+	for _, stone := range stones {
+		num := stone.number
+		count += BlinkTimes(num, times)
+	}
+
+	return count
+}
+
 // build LinkedList of stones, returning head
 func BuildStones(ints []int) *StoneLine {
 	var head *Stone
@@ -154,8 +254,5 @@ func Part1(input *Input) int {
 
 func Part2(input *Input) int {
 	stoneList := BuildStones(input.stones)
-
-	stoneList.BlinkTimes(75)
-
-	return len(stoneList.ToSlice())
+	return stoneList.SimulateBlinkTimes(75)
 }
