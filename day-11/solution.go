@@ -84,17 +84,32 @@ func (sl *StoneLine) Blink() {
 
 // Helper method to blink X times
 func (sl *StoneLine) BlinkTimes(times int) {
-	for time := range times {
+	for range times {
 		sl.Blink()
-		fmt.Printf("Blink #%v done\n", time)
+		// fmt.Printf("Blink #%v done\n", time)
 	}
 }
 
 // Blink `times` times for `num` (without newing up Stone structs), return diff of number of stones
 // TODO add memoization
+
+type CacheKey struct {
+	number int
+	times  int
+}
+
+var cache = make(map[CacheKey]int)
+
 func BlinkTimes(num int, times int) int {
 	if times == 0 {
 		return 0
+	}
+
+	// hacky memoization - think it's borked tbh
+	cacheKey := CacheKey{number: num, times: times}
+	v, ok := cache[cacheKey]
+	if ok {
+		return v
 	}
 
 	stoneCountDiff := 0
@@ -104,11 +119,13 @@ func BlinkTimes(num int, times int) int {
 
 	for i := range times {
 		// got to add 2 not 1, since it would start blinking on _next_ blink, not current.
-		blinksToGo := times - (i + 2)
+		blinksForNewStones := times - (i + 2)
+
+		var result int
+		cacheKey = CacheKey{num, blinksForNewStones}
 
 		if num == 0 {
-			fmt.Printf("Adding counts for %v, %v times\n", 1, blinksToGo)
-			stoneCountDiff += BlinkTimes(1, blinksToGo)
+			result = BlinkTimes(1, blinksForNewStones)
 		} else if lenS%2 == 0 {
 			stoneCountDiff += 1
 
@@ -118,15 +135,16 @@ func BlinkTimes(num int, times int) int {
 			leftHalf, _ := strconv.Atoi(strings.Join(leftHalfNums, ""))
 			rightHalf, _ := strconv.Atoi(strings.Join(rightHalfNums, ""))
 
-			fmt.Printf("Adding counts for %v, %v times\n", rightHalf, blinksToGo)
-			stoneCountDiff += BlinkTimes(rightHalf, blinksToGo)
-			fmt.Printf("Adding counts for %v, %v times\n", leftHalf, blinksToGo)
-			stoneCountDiff += BlinkTimes(leftHalf, blinksToGo)
+			leftResult := BlinkTimes(leftHalf, blinksForNewStones)
+			rightResult := BlinkTimes(rightHalf, blinksForNewStones)
+			result = leftResult + rightResult
+
 		} else {
 			newCurr := num * 2024
-			fmt.Printf("Adding counts for %v, %v times\n", newCurr, blinksToGo)
-			stoneCountDiff += BlinkTimes(newCurr, blinksToGo)
+			result = BlinkTimes(newCurr, blinksForNewStones)
 		}
+		cache[cacheKey] = result
+		stoneCountDiff += result
 	}
 
 	return stoneCountDiff

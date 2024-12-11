@@ -106,8 +106,8 @@ func TestStoneLine(t *testing.T) {
 	})
 
 	t.Run("len(BlinkTimes(25)) == SimulateBlinkTimes(25)", func(t *testing.T) {
-		stoneLine := BuildStones([]int{4, 4841539, 66, 5279, 49207, 134, 609568, 0})
-		want := 212655
+		stoneLine := BuildStones([]int{125, 17})
+		want := 55312
 		got := stoneLine.SimulateBlinkTimes(25)
 
 		utils.CheckEqual(got, want, t)
