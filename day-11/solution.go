@@ -83,34 +83,41 @@ func (sl *StoneLine) Blink() {
 }
 
 // Helper method to blink X times
-func (sl *StoneLine) BlinkTimes(times int) {
+func (sl *StoneLine) BlinkTimes(times int) *StoneLine {
 	for range times {
 		sl.Blink()
 		// fmt.Printf("Blink #%v done\n", time)
 	}
+
+	return sl
+}
+
+func (sl *StoneLine) Count() int {
+	asSlice := sl.ToSlice()
+	return len(asSlice)
 }
 
 // Blink `times` times for `num` (without newing up Stone structs), return diff of number of stones
 // TODO add memoization
 
-type CacheKey struct {
-	number int
-	times  int
-}
+// type CacheKey struct {
+// 	number int
+// 	times  int
+// }
 
-var cache = make(map[CacheKey]int)
+// var cache = make(map[CacheKey]int)
 
 func BlinkTimes(num int, times int) int {
-	if times == 0 {
+	if times <= 0 {
 		return 0
 	}
 
 	// hacky memoization - think it's borked tbh
-	cacheKey := CacheKey{number: num, times: times}
-	v, ok := cache[cacheKey]
-	if ok {
-		return v
-	}
+	// cacheKey := CacheKey{number: num, times: times}
+	// v, ok := cache[cacheKey]
+	// if ok {
+	// 	return v
+	// }
 
 	stoneCountDiff := 0
 
@@ -121,11 +128,11 @@ func BlinkTimes(num int, times int) int {
 		// got to add 2 not 1, since it would start blinking on _next_ blink, not current.
 		blinksForNewStones := times - (i + 2)
 
-		var result int
-		cacheKey = CacheKey{num, blinksForNewStones}
+		// var result int
+		// cacheKey = CacheKey{num, blinksForNewStones}
 
 		if num == 0 {
-			result = BlinkTimes(1, blinksForNewStones)
+			stoneCountDiff += BlinkTimes(1, blinksForNewStones)
 		} else if lenS%2 == 0 {
 			stoneCountDiff += 1
 
@@ -137,14 +144,13 @@ func BlinkTimes(num int, times int) int {
 
 			leftResult := BlinkTimes(leftHalf, blinksForNewStones)
 			rightResult := BlinkTimes(rightHalf, blinksForNewStones)
-			result = leftResult + rightResult
+			stoneCountDiff += leftResult + rightResult
 
 		} else {
 			newCurr := num * 2024
-			result = BlinkTimes(newCurr, blinksForNewStones)
+			stoneCountDiff += BlinkTimes(newCurr, blinksForNewStones)
 		}
-		cache[cacheKey] = result
-		stoneCountDiff += result
+		// cache[cacheKey] = result
 	}
 
 	return stoneCountDiff

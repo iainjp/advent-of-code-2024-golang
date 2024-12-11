@@ -81,37 +81,37 @@ func TestStoneLine(t *testing.T) {
 		utils.CheckSlicesHaveSameElements(got, want, t)
 	})
 
-	t.Run("len(BlinkTimes(1)) == SimulateBlinkTimes(1)", func(t *testing.T) {
-		stoneLine := BuildStones([]int{125, 17})
-		want := 3
-		got := stoneLine.SimulateBlinkTimes(1)
+	type testInput struct {
+		name   string
+		ints   []int
+		blinks int
+		want   int
+	}
 
-		utils.CheckEqual(got, want, t)
-	})
+	inputs := []testInput{
+		{"len(BlinkTimes(1)) == SimulateBlinkTimes(1)", []int{125, 17}, 1, 3},
+		{"len(BlinkTimes(2)) == SimulateBlinkTimes(2)", []int{125, 17}, 2, 4},
+		{"len(BlinkTimes(3)) == SimulateBlinkTimes(3)", []int{125, 17}, 3, 5},
+		{"len(BlinkTimes(4)) == SimulateBlinkTimes(4)", []int{125, 17}, 4, 9},
+		{"len(BlinkTimes(5)) == SimulateBlinkTimes(5)", []int{125, 17}, 5, 13},
+		{"len(BlinkTimes(6)) == SimulateBlinkTimes(6)", []int{125, 17}, 6, 22},
+		{"len(BlinkTimes(7)) == SimulateBlinkTimes(7)", []int{125, 17}, 7, 31},
+		{"len(BlinkTimes(8)) == SimulateBlinkTimes(8)", []int{125, 17}, 8, 42},
+		{"len(BlinkTimes(25)) == SimulateBlinkTimes(25)", []int{125, 17}, 25, 55312},
+	}
 
-	t.Run("len(BlinkTimes(2)) == SimulateBlinkTimes(2)", func(t *testing.T) {
-		stoneLine := BuildStones([]int{125, 17})
-		want := 4
-		got := stoneLine.SimulateBlinkTimes(2)
+	for _, tt := range inputs {
+		t.Run(tt.name, func(t *testing.T) {
+			wantStoneLine := BuildStones(tt.ints)
+			want := wantStoneLine.BlinkTimes(tt.blinks).Count()
 
-		utils.CheckEqual(got, want, t)
-	})
+			stoneLine := BuildStones([]int{125, 17})
+			got := stoneLine.SimulateBlinkTimes(tt.blinks)
 
-	t.Run("len(BlinkTimes(6)) == SimulateBlinkTimes(6)", func(t *testing.T) {
-		stoneLine := BuildStones([]int{125, 17})
-		want := 22
-		got := stoneLine.SimulateBlinkTimes(6)
-
-		utils.CheckEqual(got, want, t)
-	})
-
-	t.Run("len(BlinkTimes(25)) == SimulateBlinkTimes(25)", func(t *testing.T) {
-		stoneLine := BuildStones([]int{125, 17})
-		want := 55312
-		got := stoneLine.SimulateBlinkTimes(25)
-
-		utils.CheckEqual(got, want, t)
-	})
+			utils.CheckEqual(want, tt.want, t)
+			utils.CheckEqual(got, tt.want, t)
+		})
+	}
 }
 
 func TestPart1(t *testing.T) {
