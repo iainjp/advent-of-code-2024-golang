@@ -77,12 +77,12 @@ func CheckNotNil[K any](got *K, t testing.TB) {
 	}
 }
 
-func CheckSlicesHaveSameElements[S ~[]E, E comparable](s1 S, s2 S, t testing.TB) {
+func CheckSlicesHaveSameElements[S ~[]E, E comparable](got S, want S, t testing.TB) {
 	t.Helper()
-	CheckEqual(len(s1), len(s2), t)
-	for _, e := range s1 {
-		if !slices.Contains(s2, e) {
-			t.Fatalf("slice does not contain required element %v", e)
+	CheckEqual(len(got), len(want), t)
+	for _, e := range want {
+		if !slices.Contains(got, e) {
+			t.Fatalf("<got> does not contain required element from <want>: %v", e)
 		}
 	}
 }

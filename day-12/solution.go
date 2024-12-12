@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
-
-	"iain.fyi/aoc2024/utils"
 )
 
 var ErrInputFile = errors.New("cannot open input file")
@@ -17,7 +16,8 @@ type Coord struct {
 }
 
 type Plot struct {
-	crop  string
+	crop string
+	// plots adjacent of same crop type
 	up    *Plot
 	right *Plot
 	down  *Plot
@@ -29,21 +29,38 @@ func (p *Plot) Crop() string {
 }
 
 type PlotMap struct {
-	m map[Coord]Plot
-	r map[string][]*Coord
+	plotByCoord map[Coord]*Plot
 }
 
-func (pm *PlotMap) Put(coord Coord, point Plot) {
-	pm.m[coord] = point
-	pm.r[point.Crop()] = append(pm.r[point.Crop()], &coord)
+func (pm *PlotMap) Put(coord Coord, point *Plot) {
+	pm.plotByCoord[coord] = point
+}
+
+// if this is called a lot, think about processing upfront
+func (pm *PlotMap) GetPlots(crop string) []*Plot {
+	var plots []*Plot
+	for v := range maps.Values(pm.plotByCoord) {
+		if v.crop == crop {
+			plots = append(plots, v)
+		}
+	}
+	return plots
 }
 
 func (pm *PlotMap) GetCoords(crop string) []Coord {
-	return utils.Map(pm.r[crop], func(c *Coord) Coord { return *c })
+	var cs []Coord
+	for k, v := range pm.plotByCoord {
+		if v.crop == crop {
+			cs = append(cs, k)
+		}
+	}
+	return cs
+
 }
 
-func (pm *PlotMap) Get(coord Coord) Plot {
-	return pm.m[coord]
+func (pm *PlotMap) Get(coord Coord) *Plot {
+	plot := pm.plotByCoord[coord]
+	return plot
 }
 
 type Input struct {
@@ -60,8 +77,7 @@ func GetInput(filename string) (*Input, error) {
 	scanner := bufio.NewScanner(file)
 
 	plotMap := PlotMap{
-		m: make(map[Coord]Plot),
-		r: make(map[string][]*Coord),
+		plotByCoord: make(map[Coord]*Plot),
 	}
 
 	y := 0
@@ -70,22 +86,25 @@ func GetInput(filename string) (*Input, error) {
 		split := strings.Split(line, "")
 		for x, c := range split {
 			coord := Coord{x, y}
-			plot := Plot{crop: c}
+			currentPlot := Plot{crop: c}
 			if x > 0 {
-				left := plotMap.Get(Coord{x - 1, y})
-				plot.left = &left
-			}
-			if x < len(split)-1 {
-				right := plotMap.Get(Coord{x + 1, y})
-				plot.right = &right
+				leftCoord := Coord{x - 1, y}
+				left := plotMap.Get(leftCoord)
+				if left.crop == currentPlot.crop {
+					currentPlot.left = left
+					left.right = &currentPlot
+				}
 			}
 			if y > 0 {
-				up := plotMap.Get(Coord{x, y - 1})
-				plot.up = &up
+				upCoord := Coord{x, y - 1}
+				up := plotMap.Get(upCoord)
+				if up.crop == currentPlot.crop {
+					currentPlot.up = up
+					up.down = &currentPlot
+				}
 
-				up.down = &plot
 			}
-			plotMap.Put(coord, plot)
+			plotMap.Put(coord, &currentPlot)
 		}
 		y += 1
 	}
@@ -101,5 +120,5 @@ func main() {
 }
 
 func Part1(input *Input) int {
-	return len(input.plotMap.m)
+	return len(input.plotMap.plotByCoord)
 }
