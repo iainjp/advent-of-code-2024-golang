@@ -76,10 +76,19 @@ func TestRegion(t *testing.T) {
 		return false
 	}
 	regionA := utils.Filter(got, filter)[0]
+	t.Run("Area()", func(t *testing.T) {
+		utils.CheckEqual(len(regionA.plots.data), 4, t)
+		utils.CheckEqual(regionA.Area(), 4, t)
+	})
 
-	utils.CheckEqual(len(regionA.plots.data), 4, t)
-	utils.CheckEqual(regionA.Area(), 4, t)
-	utils.CheckEqual(regionA.Perimeter(), 10, t)
+	t.Run("Perimeter()", func(t *testing.T) {
+		utils.CheckEqual(regionA.Perimeter(), 10, t)
+	})
+
+	t.Run("Sides()", func(t *testing.T) {
+		utils.CheckEqual(regionA.Sides(), 4, t)
+	})
+
 }
 
 func TestPart1(t *testing.T) {
@@ -89,4 +98,25 @@ func TestPart1(t *testing.T) {
 	got := Part1(input)
 
 	utils.CheckEqual(got, want, t)
+}
+
+func TestPart2(t *testing.T) {
+	t.Run("input_minimal.txt", func(t *testing.T) {
+
+		input, _ := GetInput("input_minimal.txt")
+
+		want := 80
+		got := Part2(input)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("input_example.txt", func(t *testing.T) {
+		input, _ := GetInput("input_example.txt")
+
+		want := 368
+		got := Part2(input)
+
+		utils.CheckEqual(got, want, t)
+	})
 }

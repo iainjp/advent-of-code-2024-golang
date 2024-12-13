@@ -7,6 +7,7 @@ import (
 	"iter"
 	"maps"
 	"os"
+	"slices"
 	"strings"
 
 	"iain.fyi/aoc2024/utils"
@@ -29,6 +30,12 @@ type Plot struct {
 
 func (p *Plot) Crop() string {
 	return p.crop
+}
+
+func (p *Plot) Adjacent() []*Plot {
+	return []*Plot{
+		p.up, p.right, p.down, p.left,
+	}
 }
 
 type PlotMap struct {
@@ -155,9 +162,7 @@ func (r *Region) Area() int {
 func (r *Region) Perimeter() int {
 	pCount := 0
 	for p, _ := range r.plots.data {
-		adjacent := []*Plot{
-			p.up, p.right, p.down, p.left,
-		}
+		adjacent := p.Adjacent()
 		for _, adj := range adjacent {
 			if adj == nil {
 				pCount += 1
@@ -165,6 +170,58 @@ func (r *Region) Perimeter() int {
 		}
 	}
 	return pCount
+}
+
+func SidesDiff(initial int, new int) int {
+	return utils.Abs(new - initial)
+}
+
+// an "edge" -- combination of plot and dir
+type Walked struct {
+	plot *Plot
+	dir  int
+}
+
+// walk around edges of region, counting distinct "sides"
+func (r *Region) Sides() int {
+	// track edges walked
+	edgesWalked := NewSet[Walked]()
+
+	start := utils.IterSeqToSlice(maps.Keys(r.plots.data))[0]
+	adjacent := start.Adjacent()
+
+	if slices.Equal(adjacent, []*Plot{nil, nil, nil, nil}) {
+		// single block
+		return 4
+	}
+
+	sides := 1
+	plotNotNil := func(p *Plot) bool { return p != nil }
+	currentDir, current := utils.First(adjacent, plotNotNil)
+
+	edgesWalked.Put(Walked{start, currentDir})
+
+	// until we reach start again, and point in the init direction
+	for {
+		adjacent = current.Adjacent()
+		// keep going in same direction if we can
+		current = adjacent[currentDir]
+		// otherwise, figure out next step
+		if current == nil {
+			prevDir := currentDir
+			currentDir, current = utils.First(adjacent, plotNotNil)
+			diff := SidesDiff(prevDir, currentDir)
+			sides += diff
+		}
+
+		if edgesWalked.Exists(Walked{current, currentDir}) {
+			break
+		}
+
+		edgesWalked.Put(Walked{current, currentDir})
+	}
+
+	return sides - 1
 }
 
 func NewRegion() Region {
@@ -211,6 +268,9 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
+
 }
 
 func Part1(input *Input) int {
@@ -219,6 +279,18 @@ func Part1(input *Input) int {
 
 	for _, r := range regions {
 		cost := r.Area() * r.Perimeter()
+		totalCost += cost
+	}
+
+	return totalCost
+}
+
+func Part2(input *Input) int {
+	totalCost := 0
+	regions := GetRegions(input.plotMap)
+
+	for _, r := range regions {
+		cost := r.Area() * r.Sides()
 		totalCost += cost
 	}
 

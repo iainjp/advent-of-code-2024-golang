@@ -48,6 +48,15 @@ func Filter[T any](ts []T, fn func(T) bool) []T {
 	return results
 }
 
+func First[T any](ts []*T, fn func(*T) bool) (int, *T) {
+	for i, t := range ts {
+		if fn(t) {
+			return i, t
+		}
+	}
+	return -1, nil
+}
+
 func CountOccurences[T comparable](ts []T) map[T]int {
 	counts := make(map[T]int)
 	for _, num := range ts {
