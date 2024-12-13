@@ -51,3 +51,12 @@ func TestPlotMap(t *testing.T) {
 		utils.CheckSlicesHaveSameElements(got, want, t)
 	})
 }
+
+func TestCountRegions(t *testing.T) {
+	input, _ := GetInput("input_minimal.txt")
+
+	want := 5
+	got := CountRegions(input.plotMap)
+
+	utils.CheckEqual(got, want, t)
+}

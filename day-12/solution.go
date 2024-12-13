@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"iter"
 	"maps"
 	"os"
 	"strings"
@@ -47,6 +48,11 @@ func (pm *PlotMap) GetPlots(crop string) []*Plot {
 	return plots
 }
 
+func (pm *PlotMap) GetPlotsIter() iter.Seq[*Plot] {
+	return maps.Values(pm.plotByCoord)
+}
+
+// if this is called a lot, think about processing upfront
 func (pm *PlotMap) GetCoords(crop string) []Coord {
 	var cs []Coord
 	for k, v := range pm.plotByCoord {
@@ -110,6 +116,59 @@ func GetInput(filename string) (*Input, error) {
 	}
 
 	return &Input{plotMap}, nil
+}
+
+type Set[T comparable] struct {
+	data map[T]bool
+}
+
+func (s *Set[T]) Put(t T) {
+	s.data[t] = true
+}
+
+func (s *Set[T]) Exists(t T) bool {
+	_, ok := s.data[t]
+	return ok
+}
+
+func NewSet[T comparable]() Set[T] {
+	data := make(map[T]bool)
+	return Set[T]{data}
+}
+
+// TODO - fix and test
+func CountRegions(pm PlotMap) int {
+	seen := NewSet[*Plot]()
+	it := pm.GetPlotsIter()
+
+	var walk func(plot *Plot, region Set[*Plot])
+	walk = func(plot *Plot, region Set[*Plot]) {
+		if !seen.Exists(plot) {
+			seen.Put(plot)
+			region.Put(plot)
+
+			for _, p := range []*Plot{plot.up, plot.right, plot.down, plot.left} {
+				if p != nil && !seen.Exists(p) && !region.Exists(p) {
+					walk(p, region)
+					region.Put(p)
+				}
+			}
+		}
+	}
+
+	counter := 0
+
+	for plot := range it {
+		region := NewSet[*Plot]()
+		walk(plot, region)
+		// if we populated region at all, we saw a new region
+		if len(region.data) > 0 {
+			counter += 1
+		}
+		region = NewSet[*Plot]()
+	}
+
+	return counter
 }
 
 func main() {
