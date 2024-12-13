@@ -1,6 +1,7 @@
 package main
 
 import (
+	"maps"
 	"testing"
 
 	"iain.fyi/aoc2024/utils"
@@ -52,11 +53,40 @@ func TestPlotMap(t *testing.T) {
 	})
 }
 
-func TestCountRegions(t *testing.T) {
+func TestGetRegions(t *testing.T) {
 	input, _ := GetInput("input_minimal.txt")
 
 	want := 5
-	got := CountRegions(input.plotMap)
+	got := GetRegions(input.plotMap)
+
+	utils.CheckEqual(len(got), want, t)
+}
+
+func TestRegion(t *testing.T) {
+	input, _ := GetInput("input_minimal.txt")
+
+	got := GetRegions(input.plotMap)
+
+	crop := "A"
+	filter := func(r Region) bool {
+		// this feels dirty
+		for k := range maps.Keys(r.plots.data) {
+			return k.crop == crop
+		}
+		return false
+	}
+	regionA := utils.Filter(got, filter)[0]
+
+	utils.CheckEqual(len(regionA.plots.data), 4, t)
+	utils.CheckEqual(regionA.Area(), 4, t)
+	utils.CheckEqual(regionA.Perimeter(), 10, t)
+}
+
+func TestPart1(t *testing.T) {
+	input, _ := GetInput("input_minimal.txt")
+
+	want := 140
+	got := Part1(input)
 
 	utils.CheckEqual(got, want, t)
 }

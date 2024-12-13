@@ -8,6 +8,8 @@ import (
 	"maps"
 	"os"
 	"strings"
+
+	"iain.fyi/aoc2024/utils"
 )
 
 var ErrInputFile = errors.New("cannot open input file")
@@ -126,6 +128,12 @@ func (s *Set[T]) Put(t T) {
 	s.data[t] = true
 }
 
+func (s *Set[T]) PutAll(t []T) {
+	for _, tt := range t {
+		s.Put(tt)
+	}
+}
+
 func (s *Set[T]) Exists(t T) bool {
 	_, ok := s.data[t]
 	return ok
@@ -136,39 +144,66 @@ func NewSet[T comparable]() Set[T] {
 	return Set[T]{data}
 }
 
-// TODO - fix and test
-func CountRegions(pm PlotMap) int {
+type Region struct {
+	plots Set[*Plot]
+}
+
+func (r *Region) Area() int {
+	return len(r.plots.data)
+}
+
+func (r *Region) Perimeter() int {
+	pCount := 0
+	for p, _ := range r.plots.data {
+		adjacent := []*Plot{
+			p.up, p.right, p.down, p.left,
+		}
+		for _, adj := range adjacent {
+			if adj == nil {
+				pCount += 1
+			}
+		}
+	}
+	return pCount
+}
+
+func NewRegion() Region {
+	return Region{plots: NewSet[*Plot]()}
+}
+
+func GetRegions(pm PlotMap) []Region {
 	seen := NewSet[*Plot]()
 	it := pm.GetPlotsIter()
 
-	var walk func(plot *Plot, region Set[*Plot])
-	walk = func(plot *Plot, region Set[*Plot]) {
+	var walk func(plot *Plot, region *Region)
+	walk = func(plot *Plot, region *Region) {
 		if !seen.Exists(plot) {
 			seen.Put(plot)
-			region.Put(plot)
+			region.plots.Put(plot)
 
 			for _, p := range []*Plot{plot.up, plot.right, plot.down, plot.left} {
-				if p != nil && !seen.Exists(p) && !region.Exists(p) {
+				if p != nil && !seen.Exists(p) && !region.plots.Exists(p) {
 					walk(p, region)
-					region.Put(p)
+					region.plots.Put(p)
 				}
 			}
 		}
 	}
 
-	counter := 0
-
+	var regions []Region
 	for plot := range it {
-		region := NewSet[*Plot]()
-		walk(plot, region)
+		region := NewRegion()
+		walk(plot, &region)
 		// if we populated region at all, we saw a new region
-		if len(region.data) > 0 {
-			counter += 1
+		if len(region.plots.data) > 0 {
+			plots := utils.IterSeqToSlice(maps.Keys(region.plots.data))
+			region.plots.PutAll(plots)
+			regions = append(regions, region)
 		}
-		region = NewSet[*Plot]()
+		region = NewRegion()
 	}
 
-	return counter
+	return regions
 }
 
 func main() {
@@ -179,5 +214,13 @@ func main() {
 }
 
 func Part1(input *Input) int {
-	return len(input.plotMap.plotByCoord)
+	totalCost := 0
+	regions := GetRegions(input.plotMap)
+
+	for _, r := range regions {
+		cost := r.Area() * r.Perimeter()
+		totalCost += cost
+	}
+
+	return totalCost
 }

@@ -87,6 +87,14 @@ func CheckSlicesHaveSameElements[S ~[]E, E comparable](got S, want S, t testing.
 	}
 }
 
+func IterSeqToSlice[E any](it iter.Seq[E]) []E {
+	var es []E
+	for ei := range it {
+		es = append(es, ei)
+	}
+	return es
+}
+
 func IterToSlice[E any, B any](it iter.Seq2[B, E]) []E {
 	var es []E
 	for _, ei := range it {
