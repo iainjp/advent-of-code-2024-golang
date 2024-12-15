@@ -38,6 +38,8 @@ func (r *Robot) Tick(height int, width int) {
 
 type Input struct {
 	robots []*Robot
+	width  int
+	height int
 }
 
 func (i *Input) Print(height int, width int) {
@@ -75,6 +77,49 @@ func (i *Input) Tick(height int, width int) {
 	for _, robot := range i.robots {
 		robot.Tick(height, width)
 	}
+}
+
+func (i *Input) SafetyFactor(height int, width int) int {
+	posMap := make(map[Position]int)
+	for _, robot := range i.robots {
+		p := robot.position
+		existing := posMap[*p]
+		posMap[*p] = existing + 1
+	}
+
+	midY := (height - 1) / 2
+	midX := (width - 1) / 2
+
+	fmt.Printf("mid-height: %v, mid-width: %v\n", midY, midX)
+
+	q1Count := 0
+	q2Count := 0
+	q3Count := 0
+	q4Count := 0
+
+	for k, count := range posMap {
+		if k.x == midX || k.y == midY {
+			continue
+		}
+
+		if k.y < midY {
+			if k.x < midX {
+				q1Count += count
+			} else {
+				q2Count += count
+			}
+		} else {
+			if k.x < midX {
+				q3Count += count
+			} else {
+				q4Count += count
+			}
+		}
+	}
+
+	fmt.Println([]int{q1Count, q2Count, q3Count, q4Count})
+
+	return q1Count * q2Count * q3Count * q4Count
 }
 
 func getPosition(line string) *Position {
@@ -125,23 +170,30 @@ func GetInput(filename string) (*Input, error) {
 }
 
 func main() {
-	input, _ := GetInput("input_example.txt")
+	input, _ := GetInput("input.txt")
+	// set real width and height
+	input.width = 101
+	input.height = 103
+
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
 }
 
 func Part1(input *Input) int {
-
+	height := input.height
+	width := input.width
 	seconds := 100
+
 	fmt.Println("Initial state:")
-	input.Print(7, 11)
+	input.Print(height, width)
 
 	for range seconds {
-		input.Tick(7, 11)
+		input.Tick(height, width)
 	}
 
 	fmt.Printf("%v second state:\n", seconds)
-	input.Print(7, 11)
-	return 0
+	input.Print(height, width)
+
+	return input.SafetyFactor(height, width)
 }

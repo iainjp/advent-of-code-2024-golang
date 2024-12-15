@@ -78,5 +78,10 @@ func TestRobot(t *testing.T) {
 
 func TestPart1(t *testing.T) {
 	input, _ := GetInput("input_example.txt")
-	Part1(input)
+	input.height = 7
+	input.width = 11
+
+	got := Part1(input)
+
+	utils.CheckEqual(got, 12, t)
 }
