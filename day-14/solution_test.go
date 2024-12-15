@@ -85,3 +85,13 @@ func TestPart1(t *testing.T) {
 
 	utils.CheckEqual(got, 12, t)
 }
+
+func TestPart2(t *testing.T) {
+	input, _ := GetInput("input.txt")
+	input.height = 103
+	input.width = 101
+
+	got := Part2(input)
+
+	utils.CheckEqual(got, 6577, t)
+}

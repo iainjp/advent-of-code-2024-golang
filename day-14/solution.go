@@ -38,9 +38,10 @@ func (r *Robot) Tick(height int, width int) {
 }
 
 type Input struct {
-	robots []*Robot
-	width  int
-	height int
+	robots         []*Robot
+	width          int
+	height         int
+	elapsedSeconds int
 }
 
 func (i *Input) PositionMap() map[Position]int {
@@ -83,6 +84,7 @@ func (i *Input) Tick(height int, width int) {
 	for _, robot := range i.robots {
 		robot.Tick(height, width)
 	}
+	i.elapsedSeconds += 1
 }
 
 func (i *Input) SafetyFactor(height int, width int) int {
@@ -162,7 +164,8 @@ func GetInput(filename string) (*Input, error) {
 	scanner := bufio.NewScanner(file)
 
 	input := Input{
-		robots: make([]*Robot, 0),
+		robots:         make([]*Robot, 0),
+		elapsedSeconds: 0,
 	}
 
 	for scanner.Scan() {
@@ -183,6 +186,7 @@ func GetInput(filename string) (*Input, error) {
 
 func main() {
 	input, _ := GetInput("input.txt")
+
 	// set real width and height
 	input.width = 101
 	input.height = 103
@@ -198,16 +202,15 @@ func main() {
 func Part1(input *Input) int {
 	height := input.height
 	width := input.width
-	seconds := 100
 
 	fmt.Println("Initial state:")
 	input.Print(height, width)
 
-	for range seconds {
+	for range 100 {
 		input.Tick(height, width)
 	}
 
-	fmt.Printf("%v second state:\n", seconds)
+	fmt.Printf("%v second state:\n", input.elapsedSeconds)
 	input.Print(height, width)
 
 	return input.SafetyFactor(height, width)
@@ -218,27 +221,18 @@ func Part1(input *Input) int {
 func Part2(input *Input) int {
 	height := input.height
 	width := input.width
-	seconds := 0
 
 	fmt.Println("Initial state:")
 	input.Print(height, width)
 
-	var allDistinctSeconds []int
-
 	for {
-		seconds += 1
 		input.Tick(height, width)
 		if input.AllPositionsDistinct() {
-			allDistinctSeconds = append(allDistinctSeconds, seconds)
-			fmt.Printf("All positions distinct at %v seconds\n\n", seconds)
+			fmt.Printf("All positions distinct at %v seconds\n\n", input.elapsedSeconds)
 			input.Print(height, width)
-		}
-		if seconds > 50000 {
 			break
 		}
 	}
 
-	fmt.Printf("All positions distinct at: %v", allDistinctSeconds)
-
-	return allDistinctSeconds[0]
+	return input.elapsedSeconds
 }
