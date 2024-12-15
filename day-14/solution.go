@@ -28,6 +28,37 @@ type Input struct {
 	robots []*Robot
 }
 
+func (i *Input) Print(height int, width int) {
+	var output [][]string
+
+	posMap := make(map[Position]int)
+	for _, robot := range i.robots {
+		p := robot.position
+		existing := posMap[*p]
+		posMap[*p] = existing + 1
+	}
+
+	for y := range height {
+		var line []string
+		for x := range width {
+			v, ok := posMap[Position{x, y}]
+			if ok {
+				line = append(line, strconv.Itoa(v))
+			} else {
+				line = append(line, ".")
+			}
+		}
+		output = append(output, line)
+	}
+
+	for _, line := range output {
+		for _, c := range line {
+			fmt.Print(c)
+		}
+		fmt.Println()
+	}
+}
+
 func getPosition(line string) *Position {
 	posPattern := regexp.MustCompile(`p=(-?\d+),(-?\d+)`)
 	pos := posPattern.FindStringSubmatch(line)
@@ -83,6 +114,6 @@ func main() {
 }
 
 func Part1(input *Input) int {
-	fmt.Println(input.robots)
+	input.Print(7, 11)
 	return 0
 }

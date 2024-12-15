@@ -38,3 +38,8 @@ func TestGetInput(t *testing.T) {
 	utils.CheckEqual(*got.robots[2], want2, t)
 	utils.CheckEqual(*got.robots[11], want11, t)
 }
+
+func TestPart1(t *testing.T) {
+	input, _ := GetInput("input_example.txt")
+	Part1(input)
+}
