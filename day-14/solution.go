@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"regexp"
 	"strconv"
@@ -42,15 +43,20 @@ type Input struct {
 	height int
 }
 
-func (i *Input) Print(height int, width int) {
-	var output [][]string
-
+func (i *Input) PositionMap() map[Position]int {
 	posMap := make(map[Position]int)
 	for _, robot := range i.robots {
 		p := robot.position
 		existing := posMap[*p]
 		posMap[*p] = existing + 1
 	}
+	return posMap
+}
+
+func (i *Input) Print(height int, width int) {
+	var output [][]string
+
+	posMap := i.PositionMap()
 
 	for y := range height {
 		var line []string
@@ -80,12 +86,7 @@ func (i *Input) Tick(height int, width int) {
 }
 
 func (i *Input) SafetyFactor(height int, width int) int {
-	posMap := make(map[Position]int)
-	for _, robot := range i.robots {
-		p := robot.position
-		existing := posMap[*p]
-		posMap[*p] = existing + 1
-	}
+	posMap := i.PositionMap()
 
 	midY := (height - 1) / 2
 	midX := (width - 1) / 2
@@ -117,9 +118,20 @@ func (i *Input) SafetyFactor(height int, width int) int {
 		}
 	}
 
-	fmt.Println([]int{q1Count, q2Count, q3Count, q4Count})
-
 	return q1Count * q2Count * q3Count * q4Count
+}
+
+func (i *Input) AllPositionsDistinct() bool {
+	posMap := i.PositionMap()
+
+	maxCount := 0
+	for v := range maps.Values(posMap) {
+		if v > maxCount {
+			maxCount = v
+		}
+	}
+
+	return maxCount < 2
 }
 
 func getPosition(line string) *Position {
@@ -178,6 +190,9 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
+
 }
 
 func Part1(input *Input) int {
@@ -196,4 +211,34 @@ func Part1(input *Input) int {
 	input.Print(height, width)
 
 	return input.SafetyFactor(height, width)
+}
+
+// assuming the christmas tree is written in `1`s, all positions must be distinct
+// (other there would be >1s)
+func Part2(input *Input) int {
+	height := input.height
+	width := input.width
+	seconds := 0
+
+	fmt.Println("Initial state:")
+	input.Print(height, width)
+
+	var allDistinctSeconds []int
+
+	for {
+		seconds += 1
+		input.Tick(height, width)
+		if input.AllPositionsDistinct() {
+			allDistinctSeconds = append(allDistinctSeconds, seconds)
+			fmt.Printf("All positions distinct at %v seconds\n\n", seconds)
+			input.Print(height, width)
+		}
+		if seconds > 50000 {
+			break
+		}
+	}
+
+	fmt.Printf("All positions distinct at: %v", allDistinctSeconds)
+
+	return allDistinctSeconds[0]
 }
