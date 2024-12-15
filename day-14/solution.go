@@ -24,6 +24,18 @@ type Robot struct {
 	velocity *Velocity
 }
 
+// non-negative modulo
+func mod(a, b int) int {
+	return (a%b + b) % b
+}
+
+func (r *Robot) Tick(height int, width int) {
+	newX := mod(r.position.x+r.velocity.x, width)
+	newY := mod(r.position.y+r.velocity.y, height)
+
+	r.position = &Position{x: newX, y: newY}
+}
+
 type Input struct {
 	robots []*Robot
 }
@@ -59,8 +71,14 @@ func (i *Input) Print(height int, width int) {
 	}
 }
 
+func (i *Input) Tick(height int, width int) {
+	for _, robot := range i.robots {
+		robot.Tick(height, width)
+	}
+}
+
 func getPosition(line string) *Position {
-	posPattern := regexp.MustCompile(`p=(-?\d+),(-?\d+)`)
+	posPattern := regexp.MustCompile(`p=(\d+),(\d+)`)
 	pos := posPattern.FindStringSubmatch(line)
 	posX, _ := strconv.Atoi(pos[1])
 	posY, _ := strconv.Atoi(pos[2])
@@ -114,6 +132,16 @@ func main() {
 }
 
 func Part1(input *Input) int {
+
+	seconds := 100
+	fmt.Println("Initial state:")
+	input.Print(7, 11)
+
+	for range seconds {
+		input.Tick(7, 11)
+	}
+
+	fmt.Printf("%v second state:\n", seconds)
 	input.Print(7, 11)
 	return 0
 }

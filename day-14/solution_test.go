@@ -39,6 +39,43 @@ func TestGetInput(t *testing.T) {
 	utils.CheckEqual(*got.robots[11], want11, t)
 }
 
+func TestRobot(t *testing.T) {
+	makeRobot := func() Robot {
+		return Robot{
+			position: &Position{
+				x: 1, y: 1,
+			},
+			velocity: &Velocity{
+				x: -2, y: -1,
+			},
+		}
+	}
+
+	t.Run("Tick() once", func(t *testing.T) {
+		want := Position{
+			x: 4, y: 0,
+		}
+		robot := makeRobot()
+		robot.Tick(5, 5)
+		got := *robot.position
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Tick() twice", func(t *testing.T) {
+		want := Position{
+			x: 2, y: 4,
+		}
+		robot := makeRobot()
+		robot.Tick(5, 5)
+		robot.Tick(5, 5)
+		got := *robot.position
+
+		utils.CheckEqual(got, want, t)
+	})
+
+}
+
 func TestPart1(t *testing.T) {
 	input, _ := GetInput("input_example.txt")
 	Part1(input)
