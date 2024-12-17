@@ -125,4 +125,85 @@ func TestMoves(t *testing.T) {
 
 		utils.CheckEqual(got, want, t)
 	})
+
+	t.Run("Up() moves robot and box right", func(t *testing.T) {
+		input, _ := GetInput("input_up.txt")
+
+		want := []string{"#", ".", "O", "O", "@", ".", ".", "#"}
+
+		input.grid.Up()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Up() moves robot and multiple boxes right", func(t *testing.T) {
+		input, _ := GetInput("input_up.txt")
+
+		want := []string{"#", "O", "O", "@", ".", ".", ".", "#"}
+
+		input.grid.Up()
+		input.grid.Up()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Up(), no space, no change", func(t *testing.T) {
+		input, _ := GetInput("input_up.txt")
+
+		want := []string{"#", "O", "O", "@", ".", ".", ".", "#"}
+
+		input.grid.Up()
+		input.grid.Up()
+		input.grid.Up()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Down() moves robot and box down", func(t *testing.T) {
+		input, _ := GetInput("input_down.txt")
+
+		want := []string{"#", ".", ".", "@", "O", "O", ".", "#"}
+
+		input.grid.Down()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Down() moves robot and multiple boxes down", func(t *testing.T) {
+		input, _ := GetInput("input_down.txt")
+
+		want := []string{"#", ".", ".", ".", "@", "O", "O", "#"}
+
+		input.grid.Down()
+		input.grid.Down()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+
+	t.Run("Down(), no space, no change", func(t *testing.T) {
+		input, _ := GetInput("input_down.txt")
+
+		want := []string{"#", ".", ".", ".", "@", "O", "O", "#"}
+
+		input.grid.Down()
+		input.grid.Down()
+		input.grid.Down()
+		got := input.grid.Column(1)
+
+		utils.CheckEqual(got, want, t)
+	})
+}
+
+func TestPart1(t *testing.T) {
+	input, _ := GetInput("input_example.txt")
+
+	want := 10092
+	got := Part1(input)
+
+	utils.CheckEqual(got, want, t)
 }

@@ -14,6 +14,7 @@ const (
 	SPACE = "."
 	WALL  = "#"
 	BOX   = "O"
+	ROBOT = "@"
 )
 
 type Coord struct {
@@ -37,11 +38,21 @@ type Grid struct {
 func (g *Grid) GetRobot() Coord {
 	var rc Coord
 	for k, v := range g.cgMap {
-		if v.symbol == "@" {
+		if v.symbol == ROBOT {
 			rc = k
 		}
 	}
 	return rc
+}
+
+func (g *Grid) GetBoxes() []Coord {
+	var coords []Coord
+	for k, v := range g.cgMap {
+		if v.symbol == BOX {
+			coords = append(coords, k)
+		}
+	}
+	return coords
 }
 
 func (g *Grid) Row(row int) []string {
@@ -120,6 +131,64 @@ func (g *Grid) Right() {
 	}
 }
 
+func (g *Grid) Down() {
+	robot := g.GetRobot()
+	col := g.Column(robot.x)
+
+	// assume we can't move
+	firstSpace := -1
+	for i := robot.y; i <= g.maxY; i++ {
+		if col[i] == SPACE {
+			firstSpace = i
+			break
+		}
+		if col[i] == WALL {
+			break
+		}
+	}
+
+	// can move
+	if firstSpace > -1 {
+		for i := firstSpace; i > robot.y; i-- {
+			currCoord := Coord{x: robot.x, y: i}
+			up := Coord{x: robot.x, y: i - 1}
+			g.cgMap[currCoord] = g.cgMap[up]
+		}
+
+		// set robot old position to "."
+		g.cgMap[robot] = GridPoint{symbol: SPACE}
+	}
+}
+
+func (g *Grid) Up() {
+	robot := g.GetRobot()
+	col := g.Column(robot.x)
+
+	// assume we can't move
+	firstSpace := -1
+	for i := robot.y; i >= 0; i-- {
+		if col[i] == SPACE {
+			firstSpace = i
+			break
+		}
+		if col[i] == WALL {
+			break
+		}
+	}
+
+	// can move
+	if firstSpace > -1 {
+		for i := firstSpace; i < robot.y; i++ {
+			currCoord := Coord{x: robot.x, y: i}
+			down := Coord{x: robot.x, y: i + 1}
+			g.cgMap[currCoord] = g.cgMap[down]
+		}
+
+		// set robot old position to "."
+		g.cgMap[robot] = GridPoint{symbol: SPACE}
+	}
+}
+
 type Input struct {
 	grid  Grid
 	moves *[]string
@@ -128,8 +197,16 @@ type Input struct {
 func (i *Input) Run() {
 	move := i.PopMove()
 	for move != "" {
-		// do the move lol
-		fmt.Printf("Move: %v\n", move)
+		switch move {
+		case "^":
+			i.grid.Up()
+		case ">":
+			i.grid.Right()
+		case "v":
+			i.grid.Down()
+		case "<":
+			i.grid.Left()
+		}
 
 		move = i.PopMove()
 	}
@@ -203,12 +280,20 @@ func GetInput(filename string) (*Input, error) {
 }
 
 func main() {
-	input, _ := GetInput("input_example.txt")
+	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
 }
 
 func Part1(input *Input) int {
-	return 0
+	input.Run()
+	boxes := input.grid.GetBoxes()
+
+	gpsSum := 0
+	for _, c := range boxes {
+		gpsSum += c.GPS()
+	}
+
+	return gpsSum
 }
