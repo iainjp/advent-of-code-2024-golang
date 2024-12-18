@@ -94,26 +94,28 @@ func (m *Maze) Dijkstra() map[*Tile]int {
 	for len(toVisit) > 0 {
 		sort.SliceStable(toVisit, vertexByDistance)
 
-		curr := toVisit[0]
-		facing := curr.direction
+		currentTile := toVisit[0].tile
+		facing := toVisit[0].direction
 		toVisit = toVisit[1:]
 
-		for direction, next := range curr.tile.vertices {
+		for _, vertex := range currentTile.vertices {
+			direction := vertex.direction
+			nextTile := vertex.tile
 			cost := Cost(facing, direction)
 
-			altCost := distances[curr.tile] + cost
-			existingCost := distances[next.tile]
+			altCost := distances[currentTile] + cost
+			existingCost := distances[nextTile]
 			if altCost < existingCost {
-				distances[next.tile] = altCost
+				distances[nextTile] = altCost
 			}
 
-			previouslyTraversed := traversed[*next]
+			previouslyTraversed := traversed[*vertex]
 			if !previouslyTraversed {
-				traversed[*next] = true
-				toVisit = append(toVisit, next)
+				traversed[*vertex] = true
+				toVisit = append(toVisit, vertex)
 			}
 
-			if next.tile.symbol == END {
+			if nextTile.symbol == END {
 				fmt.Printf("Hit END! AltCode: %v; Existing: %v\n", altCost, existingCost)
 			}
 		}
