@@ -59,7 +59,7 @@ func Cost(facing, direction int) int {
 		cost = 1001
 	case 2:
 		// go backwards - making prohibitively expensive
-		cost = 2001
+		cost = -1
 	case 3:
 		// anti-clockwise
 		cost = 1001
@@ -94,14 +94,18 @@ func (m *Maze) Dijkstra() map[*Tile]int {
 	for len(toVisit) > 0 {
 		sort.SliceStable(toVisit, vertexByDistance)
 
-		currentTile := toVisit[0].tile
-		facing := toVisit[0].direction
+		current := toVisit[0]
+		currentTile := current.tile
+		facing := current.direction
 		toVisit = toVisit[1:]
 
 		for _, vertex := range currentTile.vertices {
 			direction := vertex.direction
 			nextTile := vertex.tile
 			cost := Cost(facing, direction)
+			if cost < 0 {
+				continue
+			}
 
 			altCost := distances[currentTile] + cost
 			existingCost := distances[nextTile]
