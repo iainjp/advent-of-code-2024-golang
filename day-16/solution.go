@@ -22,25 +22,23 @@ const (
 )
 
 const (
-	_     = iota
 	NORTH = iota // 1
 	EAST  = iota // 2
 	SOUTH = iota // 3
 	WEST  = iota // 4
 )
 
-type Tile struct {
-	symbol string
-	// indexed by directional const
-	neighbours []*Tile
-	// TODO -- try baking the direction into the neighbour more explicitly - e.g a vertex for each (*Tile, direction)
-	// TOOD -- can then just use DFS or Djikstra across those vertices
-	coord Coord
-	cost  int
+type Vertex struct {
+	tile      *Tile
+	direction int
 }
 
-func (a Tile) Equal(o Tile) bool {
-	return a.coord == o.coord && a.cost == o.cost
+type Tile struct {
+	symbol string
+	coord  Coord
+	// TODO -- try baking the direction into the neighbour more explicitly - e.g a vertex for each (*Tile, direction)
+	// TOOD -- can then just use DFS or Djikstra across those vertices
+	vertices []*Vertex
 }
 
 type Maze struct {
@@ -49,62 +47,74 @@ type Maze struct {
 	all   []*Tile
 }
 
+func Cost(facing, direction int) int {
+	var cost int
+	turns := utils.Abs(facing - direction)
+	switch turns {
+	case 0:
+		// straight ahead
+		cost = 1
+	case 1:
+		// clock-wise
+		cost = 1001
+	case 2:
+		// go backwards - making prohibitively expensive
+		cost = 2001
+	case 3:
+		// anti-clockwise
+		cost = 1001
+	}
+
+	return cost
+}
+
 // Useful: https://www.freecodecamp.org/news/dijkstras-shortest-path-algorithm-visual-introduction/
 // Returns map of *Tile -> cost to get there
 func (m *Maze) Dijkstra() map[*Tile]int {
-	facing := EAST
 	start := m.start
 
 	distances := make(map[*Tile]int)
 	for _, tile := range m.all {
-		distances[tile] = int(math.Inf(1))
+		distances[tile] = math.MaxInt32
 	}
 	distances[start] = 0
 
-	// toVisit := append([]*Tile{}, m.all...)
-	toVisit := m.all
-	byDistance := func(i, j int) bool {
-		return distances[toVisit[i]] < distances[toVisit[j]]
+	toVisit := start.vertices
+	// set initial distances
+	for _, v := range toVisit {
+		distances[v.tile] = Cost(EAST, v.direction)
 	}
 
+	vertexByDistance := func(i, j int) bool {
+		return distances[toVisit[i].tile] < distances[toVisit[j].tile]
+	}
+
+	traversed := make(map[Vertex]bool)
+
 	for len(toVisit) > 0 {
-		sort.SliceStable(toVisit, byDistance)
+		sort.SliceStable(toVisit, vertexByDistance)
 
 		curr := toVisit[0]
+		facing := curr.direction
 		toVisit = toVisit[1:]
 
-		for direction, next := range curr.neighbours {
-			var cost int
-			if next == nil {
-				continue
+		for direction, next := range curr.tile.vertices {
+			cost := Cost(facing, direction)
+
+			altCost := distances[curr.tile] + cost
+			existingCost := distances[next.tile]
+			if altCost < existingCost {
+				distances[next.tile] = altCost
 			}
 
-			// directions are messed up - this stage should be _considering_ next
-			// and marking the cost, not changing directions constantly.
-			turns := utils.Abs(facing - direction)
-
-			switch turns {
-			case 0:
-				// straight ahead
-				cost = 1
-			case 1:
-				// clock-wise
-				cost = 1001
-				facing = direction
-			case 2:
-				// go backwards - skip
-				cost = 2001
-				facing = direction
-			case 3:
-				// anti-clockwise
-				cost = 1001
-				facing = direction
+			previouslyTraversed := traversed[*next]
+			if !previouslyTraversed {
+				traversed[*next] = true
+				toVisit = append(toVisit, next)
 			}
 
-			alt := distances[curr] + cost
-			existing := distances[next]
-			if alt < existing {
-				distances[next] = alt
+			if next.tile.symbol == END {
+				fmt.Printf("Hit END! AltCode: %v; Existing: %v\n", altCost, existingCost)
 			}
 		}
 	}
@@ -158,9 +168,8 @@ func GetInput(filename string) (*Input, error) {
 			// create coord and tile
 			coord := Coord{x: x, y: y}
 			tile := Tile{
-				symbol:     c,
-				neighbours: make([]*Tile, 4),
-				coord:      coord,
+				symbol: c,
+				coord:  coord,
 			}
 			register[coord] = &tile
 			x++
@@ -177,11 +186,10 @@ func GetInput(filename string) (*Input, error) {
 	// create graph
 	for k, v := range register {
 		adj := k.Adjacent()
-		for i, n := range adj {
-			t, ok := register[n]
+		for dir, coord := range adj {
+			t, ok := register[coord]
 			// if not in register (e.g. out-of-bounds) OR wall
 			if !ok || t.symbol == WALL {
-				v.neighbours[i] = nil
 				continue
 			}
 
@@ -194,7 +202,12 @@ func GetInput(filename string) (*Input, error) {
 			}
 
 			tiles[t] = true
-			v.neighbours[i] = t
+
+			vert := Vertex{
+				tile:      t,
+				direction: dir,
+			}
+			v.vertices = append(v.vertices, &vert)
 		}
 	}
 
@@ -216,5 +229,5 @@ func GetInput(filename string) (*Input, error) {
 
 func Part1(input *Input) int {
 	distances := input.maze.Dijkstra()
-	return distances[input.maze.start]
+	return distances[input.maze.end]
 }

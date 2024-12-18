@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"testing"
 
 	"iain.fyi/aoc2024/utils"
@@ -17,11 +16,19 @@ func TestGetInput(t *testing.T) {
 }
 
 func TestPart1(t *testing.T) {
-	input, _ := GetInput("input_example.txt")
+	t.Run("input_example.txt", func(t *testing.T) {
+		input, _ := GetInput("input_example.txt")
+		want := 7036
+		got := Part1(input)
 
-	want := 7036
-	got := Part1(input)
+		utils.CheckEqual(got, want, t)
+	})
 
-	utils.CheckEqual(got-math.MaxInt32, want, t)
+	t.Run("input_example2.txt", func(t *testing.T) {
+		input, _ := GetInput("input_example2.txt")
+		want := 11048
+		got := Part1(input)
 
+		utils.CheckEqual(got, want, t)
+	})
 }
