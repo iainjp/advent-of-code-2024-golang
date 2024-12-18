@@ -33,8 +33,10 @@ type Tile struct {
 	symbol string
 	// indexed by directional const
 	neighbours []*Tile
-	coord      Coord
-	cost       int
+	// TODO -- try baking the direction into the neighbour more explicitly - e.g a vertex for each (*Tile, direction)
+	// TOOD -- can then just use DFS or Djikstra across those vertices
+	coord Coord
+	cost  int
 }
 
 func (a Tile) Equal(o Tile) bool {
@@ -47,94 +49,62 @@ type Maze struct {
 	all   []*Tile
 }
 
+// Useful: https://www.freecodecamp.org/news/dijkstras-shortest-path-algorithm-visual-introduction/
 // Returns map of *Tile -> cost to get there
 func (m *Maze) Dijkstra() map[*Tile]int {
-	direction := EAST
+	facing := EAST
 	start := m.start
 
-	distances := make(map[*Tile]int, len(m.all))
+	distances := make(map[*Tile]int)
 	for _, tile := range m.all {
-		distances[tile] = math.MaxInt32
+		distances[tile] = int(math.Inf(1))
 	}
 	distances[start] = 0
 
-	// set initial costs and distances
-	for i, n := range start.neighbours {
-		if n == nil {
-			continue
-		}
-		if i == direction {
-			n.cost = 1
-			distances[n] = 1
-		}
-		// single turn
-		if utils.Abs(direction-i) == 1 || utils.Abs(direction-1) == 3 {
-			n.cost = 1001
-			distances[n] = 1001
-		}
-
-		// 2 turns
-		if utils.Abs(direction-i) == 2 {
-			n.cost = 2001
-			distances[n] = 2001
-		}
+	// toVisit := append([]*Tile{}, m.all...)
+	toVisit := m.all
+	byDistance := func(i, j int) bool {
+		return distances[toVisit[i]] < distances[toVisit[j]]
 	}
 
-	var options []*Tile
-	for _, n := range start.neighbours {
-		if n != nil {
-			options = append(options, n)
-		}
-	}
+	for len(toVisit) > 0 {
+		sort.SliceStable(toVisit, byDistance)
 
-	type Step struct {
-		coord Coord
-		cost  int
-	}
+		curr := toVisit[0]
+		toVisit = toVisit[1:]
 
-	tileSeen := make(map[Step]bool, len(m.all))
-	// not sure on this condition
-	for len(options) > 0 {
-		sort.SliceStable(options, func(i, j int) bool {
-			return distances[options[i]] < distances[options[j]]
-		})
-
-		curr := options[0]
-		options = options[1:]
-
-		for i, next := range curr.neighbours {
+		for direction, next := range curr.neighbours {
+			var cost int
 			if next == nil {
 				continue
 			}
 
-			if i == direction {
-				next.cost = 1
-			}
-			// single turn
-			if utils.Abs(direction-i) == 1 || utils.Abs(direction-i) == 3 {
-				next.cost = 1001
-				direction = i
+			// directions are messed up - this stage should be _considering_ next
+			// and marking the cost, not changing directions constantly.
+			turns := utils.Abs(facing - direction)
+
+			switch turns {
+			case 0:
+				// straight ahead
+				cost = 1
+			case 1:
+				// clock-wise
+				cost = 1001
+				facing = direction
+			case 2:
+				// go backwards - skip
+				cost = 2001
+				facing = direction
+			case 3:
+				// anti-clockwise
+				cost = 1001
+				facing = direction
 			}
 
-			// 2 turns
-			if utils.Abs(direction-i) == 2 {
-				next.cost = 2001
-				direction = i
-			}
-
-			alt := distances[curr] + next.cost
-			if alt < distances[next] {
+			alt := distances[curr] + cost
+			existing := distances[next]
+			if alt < existing {
 				distances[next] = alt
-			}
-			// add to options if we haven't yet considered it at current cost previously
-			step := Step{
-				coord: next.coord,
-				cost:  next.cost,
-			}
-			seen := tileSeen[step]
-			if !seen {
-				tileSeen[step] = true
-				options = append(options, next)
 			}
 		}
 	}
