@@ -34,17 +34,16 @@ type Vertex struct {
 }
 
 type Tile struct {
-	symbol string
-	coord  Coord
-	// TODO -- try baking the direction into the neighbour more explicitly - e.g a vertex for each (*Tile, direction)
-	// TOOD -- can then just use DFS or Djikstra across those vertices
+	symbol   string
+	coord    Coord
 	vertices []*Vertex
 }
 
 type Maze struct {
-	start *Tile
-	end   *Tile
-	all   []*Tile
+	start       *Tile
+	end         *Tile
+	all         []*Tile
+	allVertices []*Vertex
 }
 
 func Cost(facing, direction int) int {
@@ -58,8 +57,8 @@ func Cost(facing, direction int) int {
 		// clock-wise
 		cost = 1001
 	case 2:
-		// go backwards - making prohibitively expensive
-		cost = -1
+		// go backwards - later skipped
+		cost = math.MaxInt32
 	case 3:
 		// anti-clockwise
 		cost = 1001
@@ -68,25 +67,34 @@ func Cost(facing, direction int) int {
 	return cost
 }
 
-// Useful: https://www.freecodecamp.org/news/dijkstras-shortest-path-algorithm-visual-introduction/
-// Returns map of *Tile -> cost to get there
-func (m *Maze) Dijkstra() map[*Tile]int {
+func (m *Maze) EndVertices() []*Vertex {
+	var endVertices []*Vertex
+	for _, v := range m.allVertices {
+		if v.tile == m.end {
+			endVertices = append(endVertices, v)
+		}
+	}
+	return endVertices
+}
+
+// Returns map of *Vertex -> cost to get there from start
+func (m *Maze) Dijkstra() map[*Vertex]int {
 	start := m.start
 
-	distances := make(map[*Tile]int)
-	for _, tile := range m.all {
-		distances[tile] = math.MaxInt32
+	// try tracking cost by vertex (includes direction)
+	vertexCosts := make(map[*Vertex]int)
+	for _, vertex := range m.allVertices {
+		vertexCosts[vertex] = math.MaxInt32
 	}
-	distances[start] = 0
 
 	toVisit := start.vertices
 	// set initial distances
 	for _, v := range toVisit {
-		distances[v.tile] = Cost(EAST, v.direction)
+		vertexCosts[v] = Cost(EAST, v.direction)
 	}
 
 	vertexByDistance := func(i, j int) bool {
-		return distances[toVisit[i].tile] < distances[toVisit[j].tile]
+		return vertexCosts[toVisit[i]] < vertexCosts[toVisit[j]]
 	}
 
 	traversed := make(map[Vertex]bool)
@@ -100,32 +108,27 @@ func (m *Maze) Dijkstra() map[*Tile]int {
 		toVisit = toVisit[1:]
 
 		for _, vertex := range currentTile.vertices {
-			direction := vertex.direction
-			nextTile := vertex.tile
-			cost := Cost(facing, direction)
-			if cost < 0 {
-				continue
+			cost := Cost(facing, vertex.direction)
+
+			// calculate possible vertex cost
+			altVCost := vertexCosts[current] + cost
+			existingVCost := vertexCosts[vertex]
+
+			// if less, found new best cost
+			if altVCost < existingVCost {
+				vertexCosts[vertex] = altVCost
 			}
 
-			altCost := distances[currentTile] + cost
-			existingCost := distances[nextTile]
-			if altCost < existingCost {
-				distances[nextTile] = altCost
-			}
-
+			// if we haven't traversed the vertex yet, at it to queue
 			previouslyTraversed := traversed[*vertex]
 			if !previouslyTraversed {
 				traversed[*vertex] = true
 				toVisit = append(toVisit, vertex)
 			}
-
-			if nextTile.symbol == END {
-				fmt.Printf("Hit END! AltCode: %v; Existing: %v\n", altCost, existingCost)
-			}
 		}
 	}
 
-	return distances
+	return vertexCosts
 }
 
 type Input struct {
@@ -147,7 +150,7 @@ func (c *Coord) Adjacent() []Coord {
 }
 
 func main() {
-	input, _ := GetInput("input_example.txt")
+	input, _ := GetInput("input.txt")
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
@@ -189,6 +192,9 @@ func GetInput(filename string) (*Input, error) {
 	var start *Tile
 	var end *Tile
 	tiles := make(map[*Tile]bool)
+
+	var allVertices []*Vertex
+
 	// create graph
 	for k, v := range register {
 		adj := k.Adjacent()
@@ -214,6 +220,7 @@ func GetInput(filename string) (*Input, error) {
 				direction: dir,
 			}
 			v.vertices = append(v.vertices, &vert)
+			allVertices = append(allVertices, &vert)
 		}
 	}
 
@@ -226,14 +233,25 @@ func GetInput(filename string) (*Input, error) {
 
 	return &Input{
 		maze: &Maze{
-			start: start,
-			end:   end,
-			all:   all,
+			start:       start,
+			end:         end,
+			all:         all,
+			allVertices: allVertices,
 		},
 	}, nil
 }
 
 func Part1(input *Input) int {
 	distances := input.maze.Dijkstra()
-	return distances[input.maze.end]
+
+	endVertices := input.maze.EndVertices()
+	minEndDistance := math.MaxInt32
+	for _, ev := range endVertices {
+		d := distances[ev]
+		if d < minEndDistance {
+			minEndDistance = d
+		}
+	}
+
+	return minEndDistance
 }
