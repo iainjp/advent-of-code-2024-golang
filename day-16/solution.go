@@ -241,6 +241,7 @@ func GetInput(filename string) (*Input, error) {
 	}, nil
 }
 
+// return cost of the best path to end
 func Part1(input *Input) int {
 	distances := input.maze.Dijkstra()
 
@@ -254,4 +255,15 @@ func Part1(input *Input) int {
 	}
 
 	return minEndDistance
+}
+
+// return number of tiles within any best path
+func Part2(input *Input) int {
+	// TODO walk backward through Djikstra
+	// - keep map of tiles
+	// - at each step, add next node that could have been part of best path
+	// -- so -- distances[vertex] IN (distance-1, distance-1001)
+	// - then move to each of those nodes and start again.
+
+	return 0
 }
