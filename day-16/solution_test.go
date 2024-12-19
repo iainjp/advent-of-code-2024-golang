@@ -49,4 +49,5 @@ func TestPart2(t *testing.T) {
 
 		utils.CheckEqual(got, want, t)
 	})
+
 }

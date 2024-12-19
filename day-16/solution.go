@@ -264,6 +264,17 @@ func Part1(input *Input) int {
 	return minEndDistance
 }
 
+// get vertices pointing to `start` (without doubley-linked graph, ugh)
+func GetVerticesPointingTo(to *Tile, distMap map[*Vertex]int) []*Vertex {
+	var inbound []*Vertex
+	for vert, _ := range distMap {
+		if vert.to == to {
+			inbound = append(inbound, vert)
+		}
+	}
+	return inbound
+}
+
 // return number of tiles within any best path
 func Part2(input *Input) int {
 	// TODO walk backward through Djikstra
@@ -273,40 +284,35 @@ func Part2(input *Input) int {
 	// - then move to each of those nodes and start again.
 
 	distances := input.maze.Dijkstra()
-	start := input.maze.end
+	current := input.maze.end
 	end := input.maze.start
 
+	currentCost := Part1(input)
+
 	tiles := structure.NewHashSet[*Tile]()
-	tiles.AddAll(start, end)
+	tiles.AddAll(current, end)
+	// toVisit := GetVerticesPointingTo(current, distances)
 
-	// get vertices pointing to `start` (without doubley-linked graph, ugh)
 	var toVisit []*Vertex
-	for vert, _ := range distances {
-		if vert.to == start {
-			toVisit = append(toVisit, vert)
-		}
-	}
+	for current != end {
+		inbound := GetVerticesPointingTo(current, distances)
+		for _, vert := range inbound {
+			dist := distances[vert]
 
-	for len(toVisit) > 0 {
-		current := toVisit[0]
+			// if `incomingVert` was in a best path, it cost 1 or 1001 to get to current
+			if dist == currentCost || dist == currentCost-1 || dist == currentCost-1001 {
+				tiles.Add(vert.from)
+				toVisit = append(toVisit, vert)
+			}
+		}
+
+		if len(toVisit) == 0 {
+			break
+		}
+
+		current = toVisit[0].from
+		currentCost = distances[toVisit[0]]
 		toVisit = toVisit[1:]
-
-		currentCost := distances[current]
-
-		var verticesToCurrent []*Vertex
-		for vert, _ := range distances {
-			if vert.to == current.from {
-				verticesToCurrent = append(verticesToCurrent, vert)
-			}
-		}
-
-		for _, v := range verticesToCurrent {
-			// if it was a previous step in a best path, it cost 1 or 1001 to get to current
-			if distances[v] == currentCost-1 || distances[v] == currentCost-1001 {
-				tiles.Add(v.from)
-				toVisit = append(toVisit, v)
-			}
-		}
 	}
 
 	return tiles.Size()
