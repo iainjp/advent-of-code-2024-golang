@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"iain.fyi/aoc2024/structure"
 	"iain.fyi/aoc2024/utils"
 )
 
@@ -29,7 +30,8 @@ const (
 )
 
 type Vertex struct {
-	tile      *Tile
+	from      *Tile
+	to        *Tile
 	direction int
 }
 
@@ -70,7 +72,7 @@ func Cost(facing, direction int) int {
 func (m *Maze) EndVertices() []*Vertex {
 	var endVertices []*Vertex
 	for _, v := range m.allVertices {
-		if v.tile == m.end {
+		if v.to == m.end {
 			endVertices = append(endVertices, v)
 		}
 	}
@@ -103,7 +105,7 @@ func (m *Maze) Dijkstra() map[*Vertex]int {
 		sort.SliceStable(toVisit, vertexByDistance)
 
 		current := toVisit[0]
-		currentTile := current.tile
+		currentTile := current.to
 		facing := current.direction
 		toVisit = toVisit[1:]
 
@@ -154,6 +156,9 @@ func main() {
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
 
+	p2Result := Part2(input)
+	fmt.Printf("Part 2: got %v\n", p2Result)
+
 }
 
 func GetInput(filename string) (*Input, error) {
@@ -198,25 +203,27 @@ func GetInput(filename string) (*Input, error) {
 	// create graph
 	for k, v := range register {
 		adj := k.Adjacent()
+		from := register[k]
 		for dir, coord := range adj {
-			t, ok := register[coord]
+			to, ok := register[coord]
 			// if not in register (e.g. out-of-bounds) OR wall
-			if !ok || t.symbol == WALL {
+			if !ok || to.symbol == WALL {
 				continue
 			}
 
-			if t.symbol == START {
-				start = t
+			if to.symbol == START {
+				start = to
 			}
 
-			if t.symbol == END {
-				end = t
+			if to.symbol == END {
+				end = to
 			}
 
-			tiles[t] = true
+			tiles[to] = true
 
 			vert := Vertex{
-				tile:      t,
+				from:      from,
+				to:        to,
 				direction: dir,
 			}
 			v.vertices = append(v.vertices, &vert)
@@ -265,5 +272,42 @@ func Part2(input *Input) int {
 	// -- so -- distances[vertex] IN (distance-1, distance-1001)
 	// - then move to each of those nodes and start again.
 
-	return 0
+	distances := input.maze.Dijkstra()
+	start := input.maze.end
+	end := input.maze.start
+
+	tiles := structure.NewHashSet[*Tile]()
+	tiles.AddAll(start, end)
+
+	// get vertices pointing to `start` (without doubley-linked graph, ugh)
+	var toVisit []*Vertex
+	for vert, _ := range distances {
+		if vert.to == start {
+			toVisit = append(toVisit, vert)
+		}
+	}
+
+	for len(toVisit) > 0 {
+		current := toVisit[0]
+		toVisit = toVisit[1:]
+
+		currentCost := distances[current]
+
+		var verticesToCurrent []*Vertex
+		for vert, _ := range distances {
+			if vert.to == current.from {
+				verticesToCurrent = append(verticesToCurrent, vert)
+			}
+		}
+
+		for _, v := range verticesToCurrent {
+			// if it was a previous step in a best path, it cost 1 or 1001 to get to current
+			if distances[v] == currentCost-1 || distances[v] == currentCost-1001 {
+				tiles.Add(v.from)
+				toVisit = append(toVisit, v)
+			}
+		}
+	}
+
+	return tiles.Size()
 }
