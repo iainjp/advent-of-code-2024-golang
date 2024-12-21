@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strconv"
@@ -14,20 +15,111 @@ import (
 
 var ErrInputFile = errors.New("cannot open input file")
 
+type State struct {
+	A, B, C          int
+	Output           structure.List[int]
+	InstructionIndex int
+}
+
 type Operation struct {
 	OpCode  int
 	Operand int
 }
 
-type State struct {
-	A, B, C int
-	Output  structure.List[int]
+func (o *Operation) adv(state *State) {
+	num := state.A
+	denom := int(math.Pow(2, float64(o.Operand)))
+
+	state.A = num / denom
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) bxl(state *State) {
+	newB := state.B ^ o.Operand
+	state.B = newB
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) bst(state *State) {
+	mod := o.Operand % 8
+	state.B = mod
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) jnz(state *State) {
+	if state.A == 0 {
+		state.InstructionIndex += 1
+		return
+	}
+
+	// divide by 2, as we're working on []Operation, not raw []ints
+	state.InstructionIndex = o.Operand / 2
+}
+
+func (o *Operation) bxc(state *State) {
+	state.B = state.B ^ state.C
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) out(state *State) {
+	val := o.Operand % 8
+
+	// split and add each digit to output
+	valAsString := strconv.Itoa(val)
+	for _, s := range strings.Split(valAsString, "") {
+		i, _ := strconv.Atoi(s)
+		state.Output.Add(i)
+	}
+
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) bdv(state *State) {
+	num := state.A
+	denom := int(math.Pow(2, float64(o.Operand)))
+
+	state.B = num / denom
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) cdv(state *State) {
+	num := state.A
+	denom := int(math.Pow(2, float64(o.Operand)))
+
+	state.C = num / denom
+	state.InstructionIndex += 1
+}
+
+func (o *Operation) Execute(state *State) {
+	switch o.OpCode {
+	case 0:
+		o.adv(state)
+	case 1:
+		o.bxl(state)
+	case 2:
+		o.bst(state)
+	case 3:
+		o.jnz(state)
+	case 4:
+		o.bxc(state)
+	case 5:
+		o.out(state)
+	case 6:
+		o.bdv(state)
+	case 7:
+		o.cdv(state)
+	}
 }
 
 type Debugger struct {
-	State            State
-	Program          []Operation
-	InstructionIndex int
+	State   State
+	Program []Operation
+}
+
+func (d *Debugger) Run() {
+	for d.State.InstructionIndex < len(d.Program) {
+		d.Program[d.State.InstructionIndex].Execute(&d.State)
+	}
 }
 
 type Input struct {
@@ -89,13 +181,13 @@ func GetInput(filename string) (*Input, error) {
 	input := Input{
 		debugger: &Debugger{
 			State: State{
-				A:      a,
-				B:      b,
-				C:      c,
-				Output: structure.NewList[int](),
+				A:                a,
+				B:                b,
+				C:                c,
+				Output:           structure.NewList[int](),
+				InstructionIndex: 0,
 			},
-			Program:          program,
-			InstructionIndex: 0,
+			Program: program,
 		},
 	}
 
@@ -104,5 +196,15 @@ func GetInput(filename string) (*Input, error) {
 
 // return output of program
 func Part1(input *Input) int {
-	return 0
+	input.debugger.Run()
+	output := input.debugger.State.Output.AsSlice()
+
+	var outputStrSlice []string
+	for _, i := range output {
+		outputStrSlice = append(outputStrSlice, strconv.Itoa(i))
+	}
+	joinedOutput := strings.Join(outputStrSlice, "")
+	result, _ := strconv.Atoi(joinedOutput)
+
+	return result
 }
