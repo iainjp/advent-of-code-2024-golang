@@ -357,7 +357,6 @@ func TestTruncatedDivision(t *testing.T) {
 }
 
 func TestPart1(t *testing.T) {
-
 	t.Run("input_example.txt", func(t *testing.T) {
 		input, _ := GetInput("input_example.txt")
 
@@ -375,5 +374,13 @@ func TestPart1(t *testing.T) {
 
 		utils.CheckEqual(got, want, t)
 	})
+}
 
+func TestPart2(t *testing.T) {
+	input, _ := GetInput("input_example_part2.txt")
+
+	got := Part2(input)
+	want := 117440
+
+	utils.CheckEqual(got, want, t)
 }

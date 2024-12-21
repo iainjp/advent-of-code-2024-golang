@@ -143,14 +143,56 @@ func (d *Debugger) Run() {
 	}
 }
 
+func (d *Debugger) RawProgram() []int {
+	var raw []int
+	for _, o := range d.Program {
+		raw = append(raw, o.OpCode)
+		raw = append(raw, o.Operand)
+	}
+	return raw
+}
+
+func (d *Debugger) ResetIndex() {
+	d.State.InstructionIndex = 0
+}
+
 type Input struct {
 	debugger Debugger
 }
 
+func (i *Input) Clone() *Input {
+	state := State{
+		A:                i.debugger.State.A,
+		B:                i.debugger.State.B,
+		C:                i.debugger.State.C,
+		InstructionIndex: i.debugger.State.InstructionIndex,
+		Output:           structure.NewList[int](),
+	}
+
+	for _, i := range i.debugger.State.Output.AsSlice() {
+		state.Output.Add(i)
+	}
+
+	debugger := Debugger{
+		State:   state,
+		Program: i.debugger.Program,
+	}
+
+	return &Input{
+		debugger: debugger,
+	}
+}
+
 func main() {
+
 	input, _ := GetInput("input.txt")
+	original := input.Clone()
+
 	p1Result := Part1(input)
 	fmt.Printf("Part 1: got %v\n", p1Result)
+
+	p2Result := Part2(original)
+	fmt.Printf("Part 2: got %v\n", p2Result)
 
 }
 
@@ -223,4 +265,54 @@ func Part1(input *Input) string {
 		parts = append(parts, strconv.Itoa(i))
 	}
 	return strings.Join(parts, ",")
+}
+
+func equal(s1 []int, s2 []int) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for idx := range len(s1) {
+		if s1[idx] != s2[idx] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// find register A value that makes program output itself
+func Part2(input *Input) int {
+	originalB := input.debugger.State.B
+	originalC := input.debugger.State.C
+
+	program := input.debugger.RawProgram()
+	fmt.Printf("Looking for %v ...", program)
+
+	aValue := 0
+	input.debugger.State.A = aValue
+	input.debugger.Run()
+
+	output := input.debugger.State.Output.AsSlice()
+
+	for !equal(output, program) {
+		if mod(aValue, 1000000) == 0 {
+			fmt.Printf("Trying A==%v \n", aValue)
+		}
+
+		// reset everything to original
+		// increment A
+		aValue += 1
+		input.debugger.State.A = aValue
+		input.debugger.State.B = originalB
+		input.debugger.State.C = originalC
+		input.debugger.State.InstructionIndex = 0
+		input.debugger.State.Output = structure.NewList[int]()
+
+		input.debugger.Run()
+		output = input.debugger.State.Output.AsSlice()
+	}
+
+	fmt.Printf("Quiting with A=%v \n", aValue)
+	return aValue
 }
