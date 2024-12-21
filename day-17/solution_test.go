@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"iain.fyi/aoc2024/structure"
 	"iain.fyi/aoc2024/utils"
 )
 
@@ -31,14 +32,18 @@ func TestParseProgram(t *testing.T) {
 func TestGetInput(t *testing.T) {
 	want := Input{
 		debugger: &Debugger{
-			A: 729,
-			B: 0,
-			C: 0,
+			State: State{
+				A:      729,
+				B:      0,
+				C:      0,
+				Output: structure.NewList[int](),
+			},
 			Program: []Operation{
 				{0, 1},
 				{5, 4},
 				{3, 0},
 			},
+			InstructionIndex: 0,
 		},
 	}
 	got, _ := GetInput("input_example.txt")

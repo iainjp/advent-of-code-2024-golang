@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"iain.fyi/aoc2024/structure"
 )
 
 var ErrInputFile = errors.New("cannot open input file")
@@ -17,11 +19,15 @@ type Operation struct {
 	Operand int
 }
 
+type State struct {
+	A, B, C int
+	Output  structure.List[int]
+}
+
 type Debugger struct {
-	A       int
-	B       int
-	C       int
-	Program []Operation
+	State            State
+	Program          []Operation
+	InstructionIndex int
 }
 
 type Input struct {
@@ -82,10 +88,14 @@ func GetInput(filename string) (*Input, error) {
 
 	input := Input{
 		debugger: &Debugger{
-			A:       a,
-			B:       b,
-			C:       c,
-			Program: program,
+			State: State{
+				A:      a,
+				B:      b,
+				C:      c,
+				Output: structure.NewList[int](),
+			},
+			Program:          program,
+			InstructionIndex: 0,
 		},
 	}
 
