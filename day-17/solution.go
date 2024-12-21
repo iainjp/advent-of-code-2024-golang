@@ -63,7 +63,7 @@ func (o *Operation) bxl(state *State) {
 }
 
 func (o *Operation) bst(state *State) {
-	mod := o.Operand % 8
+	mod := mod(combo(o.Operand, *state), 8)
 	state.B = mod
 	state.InstructionIndex += 1
 }

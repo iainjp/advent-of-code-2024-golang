@@ -170,10 +170,12 @@ func TestOperation(t *testing.T) {
 
 	t.Run("bst()", func(t *testing.T) {
 		state := newState()
-		op := Operation{OpCode: 2, Operand: 19}
+		state.A = 12
+		op := Operation{OpCode: 2, Operand: 4}
 
 		want := newState()
-		want.B = 3
+		want.A = 12
+		want.B = 4
 		want.InstructionIndex = 1
 
 		op.bst(&state)
@@ -276,7 +278,7 @@ func TestDebugger(t *testing.T) {
 	t.Run("C==9, program 2,6 -> B==1", func(t *testing.T) {
 		debugger := Debugger{
 			State:   NewStateBuilder().SetC(9).Build(),
-			Program: []Operation{{2, 9}},
+			Program: []Operation{{2, 6}},
 		}
 
 		debugger.Run()
