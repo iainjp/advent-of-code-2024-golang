@@ -15,6 +15,11 @@ import (
 
 var ErrInputFile = errors.New("cannot open input file")
 
+// non-negative modulo
+func mod(a, b int) int {
+	return (a%b + b) % b
+}
+
 type State struct {
 	A, B, C          int
 	Output           structure.List[int]
@@ -26,9 +31,26 @@ type Operation struct {
 	Operand int
 }
 
+func combo(operand int, state State) int {
+	if operand < 4 {
+		return operand
+	}
+
+	var comb int
+	switch operand {
+	case 4:
+		comb = state.A
+	case 5:
+		comb = state.B
+	case 6:
+		comb = state.C
+	}
+	return comb
+}
+
 func (o *Operation) adv(state *State) {
 	num := state.A
-	denom := int(math.Pow(2, float64(o.Operand)))
+	denom := int(math.Pow(2, float64(combo(o.Operand, *state))))
 
 	state.A = num / denom
 	state.InstructionIndex += 1
@@ -51,7 +73,6 @@ func (o *Operation) jnz(state *State) {
 		state.InstructionIndex += 1
 		return
 	}
-
 	// divide by 2, as we're working on []Operation, not raw []ints
 	state.InstructionIndex = o.Operand / 2
 }
@@ -62,7 +83,7 @@ func (o *Operation) bxc(state *State) {
 }
 
 func (o *Operation) out(state *State) {
-	val := o.Operand % 8
+	val := mod(combo(o.Operand, *state), 8)
 
 	// split and add each digit to output
 	valAsString := strconv.Itoa(val)
@@ -76,7 +97,7 @@ func (o *Operation) out(state *State) {
 
 func (o *Operation) bdv(state *State) {
 	num := state.A
-	denom := int(math.Pow(2, float64(o.Operand)))
+	denom := int(math.Pow(2, float64(combo(o.Operand, *state))))
 
 	state.B = num / denom
 	state.InstructionIndex += 1
@@ -84,7 +105,7 @@ func (o *Operation) bdv(state *State) {
 
 func (o *Operation) cdv(state *State) {
 	num := state.A
-	denom := int(math.Pow(2, float64(o.Operand)))
+	denom := int(math.Pow(2, float64(combo(o.Operand, *state))))
 
 	state.C = num / denom
 	state.InstructionIndex += 1
@@ -123,7 +144,7 @@ func (d *Debugger) Run() {
 }
 
 type Input struct {
-	debugger *Debugger
+	debugger Debugger
 }
 
 func main() {
@@ -179,7 +200,7 @@ func GetInput(filename string) (*Input, error) {
 	program := ParseProgram(pLine)
 
 	input := Input{
-		debugger: &Debugger{
+		debugger: Debugger{
 			State: State{
 				A:                a,
 				B:                b,
@@ -195,16 +216,11 @@ func GetInput(filename string) (*Input, error) {
 }
 
 // return output of program
-func Part1(input *Input) int {
+func Part1(input *Input) string {
 	input.debugger.Run()
-	output := input.debugger.State.Output.AsSlice()
-
-	var outputStrSlice []string
-	for _, i := range output {
-		outputStrSlice = append(outputStrSlice, strconv.Itoa(i))
+	var parts []string
+	for _, i := range input.debugger.State.Output.AsSlice() {
+		parts = append(parts, strconv.Itoa(i))
 	}
-	joinedOutput := strings.Join(outputStrSlice, "")
-	result, _ := strconv.Atoi(joinedOutput)
-
-	return result
+	return strings.Join(parts, ",")
 }
